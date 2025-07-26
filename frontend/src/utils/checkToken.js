@@ -1,0 +1,20 @@
+import {jwtDecode} from "jwt-decode";
+
+export function isTokenExpired(token) {
+	try {
+		const decoded = jwtDecode(token);
+		const currentTime = Date.now() / 1000;
+		return decoded.exp < currentTime;
+	} catch {
+		return true;
+	}
+}
+
+export function getTokenExpiryTime(token) {
+	try {
+		const decoded = jwtDecode(token);
+		return decoded.exp * 1000; // convert to ms
+	} catch {
+		return null;
+	}
+}

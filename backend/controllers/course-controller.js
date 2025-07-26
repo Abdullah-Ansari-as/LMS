@@ -355,6 +355,40 @@ const getTotalAnnouncements = async (_, res) => {
 }
 
 
+const fetchSubmittedAssignments = async (_, res) => {
+	try {
+		const submittedAssignments = await SubmitedAssignment.find();
+		if(!submittedAssignments) {
+			return res.status(404).json({message: "SubmittedAssignments not found!"});
+		}
+		return res.status(200).json({
+			success: true,
+			message: "Submitted Assignments fetched successfully",
+			submittedAssignments
+		})
+	} catch (error) {
+		console.error(error);
+		res.status(500).send("Failed to fetch submitted Assignments!");
+	}
+}
+const fetchSubmittedQuizes = async (_, res) => {
+	try {
+		const submittedQuizes = await SubmitedQuiz.find();
+		if(!submittedQuizes) {
+			return res.status(404).json({message: "SubmittedQuizes not found!"});
+		}
+		return res.status(200).json({
+			success: true,
+			message: "Submitted Quizes fetched successfully",
+			submittedQuizes
+		})
+	} catch (error) {
+		console.error(error);
+		res.status(500).send("Failed to fetch submitted Quizes!");
+	}
+}
+
+
 module.exports = {
 	newCourse,
 	getAllCourses,
@@ -367,5 +401,7 @@ module.exports = {
 	submitQuiz,
 	uploadAnnouncement,
 	getAnnouncementsByCourseId,
-	getTotalAnnouncements
+	getTotalAnnouncements,
+	fetchSubmittedAssignments,
+	fetchSubmittedQuizes
 }

@@ -40,7 +40,7 @@ const SubmitAssignment = () => {
 
 		try {
 			setLoading(true);
-			const result = await submitAssignment(file, id); 
+			const result = await submitAssignment(file, id);
 			if(result.success) {
 				dispatch(setSubmittedAssignments(result.submission));
 				setFile("");

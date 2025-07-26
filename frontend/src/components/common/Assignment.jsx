@@ -4,7 +4,7 @@ import courseBG from "/courcebg.png"
 import { MdOutlineArrowLeft } from "react-icons/md";
 import { GoFileSubmodule } from "react-icons/go";
 import { useEffect } from 'react';
-import { fetchAssignmentsById } from '../../api/courseApi';
+import { fetchAssignmentsById, fetchSubmittedAssignments } from '../../api/courseApi';
 import { useDispatch, useSelector } from 'react-redux';
 import { setAssignments } from '../../redux/slices/courseSlice';
 import { Loader2 } from 'lucide-react';
@@ -29,10 +29,9 @@ const Assignment = () => {
 	const navigate = useNavigate();
 
 	const { assignments } = useSelector((store) => store.course.assignments);
-	const { submittedAssignments } = useSelector((store) => store.course);
-	// console.log(assignments)
 
 	const [loading, setLoading] = useState(false);
+	const [totalSubmittedAssignments, setTotalSubmittedAssignments] = useState([])
 
 	const assignmentData = assignments;
 
@@ -47,6 +46,16 @@ const Assignment = () => {
 			result: result ? `${result.assignmentGrade} / 20` : "Not Graded",
 		};
 	});
+
+	useEffect(() => {
+		const getAllSubmittedAssignments = async () => {
+			const res = await fetchSubmittedAssignments();
+			if (res.success) { 
+				setTotalSubmittedAssignments(res.submittedAssignments)
+			}
+		}
+		getAllSubmittedAssignments();
+	}, [])
 
 
 	useEffect(() => {
@@ -139,7 +148,7 @@ const Assignment = () => {
 
 											<div className="font-medium text-gray-500">Submit</div>
 											<div>
-												{submittedAssignments?.some((s) => s.studentId === user._id && s.assignmentId === assignment._id) ? (
+												{totalSubmittedAssignments?.some((s) => s.studentId === user._id && s.assignmentId === assignment._id) ? (
 													<span className="text-green-600 font-semibold">Submitted</span>
 												) : (
 													<GoFileSubmodule
@@ -193,7 +202,7 @@ const Assignment = () => {
 														{assignment.totalMarks.toFixed(2)}
 													</td>
 													<td className="py-3 px-4 border-r text-blue-900 border-gray-200">
-														{submittedAssignments?.some((s) => s.studentId === user._id && s.assignmentId === assignment._id) ? (
+														{totalSubmittedAssignments?.some((s) => s.studentId === user._id && s.assignmentId === assignment._id) ? (
 															<span className="text-green-600 font-semibold">Submitted</span>
 														) : (
 															<GoFileSubmodule

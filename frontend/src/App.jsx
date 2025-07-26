@@ -95,7 +95,7 @@ function App() {
         </Route>
 
         {/* Public Routes (No token required) */}
-        
+
         <Route path="/notice-board" element={<GuestOnlyRoute><NoticeBoard /></GuestOnlyRoute>}></Route>
         <Route path="/forgot-password" element={<GuestOnlyRoute><ForgotPassword /></GuestOnlyRoute>}></Route>
         <Route path="/login" element={<GuestOnlyRoute><Login /></GuestOnlyRoute>}></Route>

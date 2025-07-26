@@ -177,3 +177,31 @@ export const getTotalAnnouncements = async () => {
 		throw error
 	}
 }
+
+export const fetchSubmittedAssignments = async () => {
+	try {
+		const res = await axios.get(`${import.meta.env.VITE_BACKEND_URL}/api/courses/fetchSubmittedAssignments`, {
+			headers: {
+				Authorization: `Bearer ${localStorage.getItem("token")}`,
+			}
+		})
+		return res.data;
+	} catch (error) {
+		console.error(error);
+		throw error
+	}
+}
+
+export const fetchSubmittedQuizes = async () => {
+	try {
+		const res = await axios.get(`${import.meta.env.VITE_BACKEND_URL}/api/courses/fetchSubmittedQuizes`, {
+			headers: {
+				Authorization: `Bearer ${localStorage.getItem("token")}`,
+			}
+		})
+		return res.data;
+	} catch (error) {
+		console.error(error);
+		throw error
+	}
+}

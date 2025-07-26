@@ -2,7 +2,7 @@ import React, { useEffect, useState } from 'react'
 import { Link, useNavigate, useParams } from 'react-router-dom'
 import courseBG from "/courcebg.png"
 import { MdOutlineArrowLeft } from "react-icons/md";
-import { fetchQuizesById } from '../../api/courseApi';
+import { fetchQuizesById, fetchSubmittedQuizes } from '../../api/courseApi';
 import { useDispatch, useSelector } from 'react-redux';
 import { setQuizes } from '../../redux/slices/courseSlice';
 import { Loader2 } from 'lucide-react';
@@ -15,8 +15,7 @@ const Quiz = () => {
 
 	const dispatch = useDispatch();
 	const { quizes } = useSelector((store) => store.course);
-	const { user } = useSelector((store) => store.user)
-	const { submittedQuizes } = useSelector((store) => store.course);
+	const { user } = useSelector((store) => store.user);
 
 	const allCourses = useSelector((store) => store.course.courses);
 	const singleCourse = allCourses?.find((course) => course._id === paramId);
@@ -25,6 +24,7 @@ const Quiz = () => {
 
 	const [quizesResults, setQuizesResults] = useState([])
 	const [loading, setLoading] = useState(false);
+	const [totalSubmittedQuizes, setTotalSubmittedQuizes] = useState([]);
 
 	const handleQuiz = (id) => {
 		navigate(`/course/attempt-quiz/${id}`)
@@ -40,6 +40,16 @@ const Quiz = () => {
 			result: result ? `${result.quizGrade} / 5` : "Not Graded"
 		}
 	});
+
+	useEffect(() => {
+		const getAllSubmittedQuizes = async () => {
+			const res = await fetchSubmittedQuizes();
+			if (res.success) { 
+				setTotalSubmittedQuizes(res.submittedQuizes)
+			}
+		};
+		getAllSubmittedQuizes();
+	}, [])
 
 
 	useEffect(() => {
@@ -122,7 +132,7 @@ const Quiz = () => {
 												</td>
 												<td className="py-3 px-4 border-r text-[#9865A1] border-gray-200">{quiz.totalMarks}</td>
 												<td className="py-3 px-4 border-r border-gray-200">
-													{submittedQuizes?.some((s) => s.studentId === user._id && s.quizId === quiz._id) ? (
+													{totalSubmittedQuizes?.some((s) => s.studentId === user._id && s.quizId === quiz._id) ? (
 														<span className="text-green-500">Submited</span>
 													) : (
 														<span
@@ -164,7 +174,7 @@ const Quiz = () => {
 										</div>
 										<div className="flex justify-between items-center">
 											<span className="font-medium text-gray-500">Submit</span>
-											{submittedQuizes?.some((s) => s.studentId === user._id && s.quizId === quiz._id) ? (
+											{totalSubmittedQuizes?.some((s) => s.studentId === user._id && s.quizId === quiz._id) ? (
 												<span className="text-green-500">Submited</span>
 											) : (
 												<span

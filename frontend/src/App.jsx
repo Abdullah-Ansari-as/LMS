@@ -33,6 +33,7 @@ import AddNewCourse from "./components/admin/AddNewCourse"
 import ProtectedRoute from "./utils/ProtectedRoute"
 import { useSelector } from "react-redux";
 import { isTokenExpired } from "./utils/checkToken";
+import Chatbot from "./pages/Chatbot";
 
 
 const GuestOnlyRoute = ({ children }) => {
@@ -75,6 +76,7 @@ function App() {
           <Route path="/progress" element={<Progress />}></Route>
           <Route path="/grade-book" element={<GradeBook />}></Route>
           <Route path="/mystudiedcourses" element={<MyStudiedCourses />}></Route>
+          <Route path="/chatbot" element={<Chatbot />}></Route>
           <Route path="/noticeboard" element={<NoticeBoard />}></Route>
         </Route>
 

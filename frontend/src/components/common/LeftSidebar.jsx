@@ -8,6 +8,7 @@ import { MdOutlineNoteAlt, MdGridOn } from "react-icons/md";
 import { Link, useNavigate } from 'react-router-dom';
 import { FaLayerGroup } from "react-icons/fa6";
 import { HiOutlineAdjustmentsHorizontal } from "react-icons/hi2";
+import { AiOutlineOpenAI } from "react-icons/ai";
 
 const LeftSidebar = ({ toggleSidebar }) => {
 
@@ -31,9 +32,9 @@ const LeftSidebar = ({ toggleSidebar }) => {
 			navigate("/notes")
 		} else if (text === "My Studied Courses") {
 			navigate("/mystudiedcourses")
-		} else if (text === "Contact Us") {
-			window.open("https://www.vu.edu.pk/contact", "_blank");
-		}
+		} else if (text === "AI Chatbot") {
+			navigate("/chatbot")
+ 		} 
 	}
 
 	const sideBarItems = [
@@ -43,7 +44,7 @@ const LeftSidebar = ({ toggleSidebar }) => {
 		{ icon: <GiProgression className='w-6 h-6' />, text: "Progress" },
 		{ icon: <MdOutlineNoteAlt className='w-6 h-6' />, text: "Notes" },
 		{ icon: <MdGridOn className='w-6 h-6' />, text: "My Studied Courses" },
-		{ icon: <FaPhoneAlt className='w-5 h-5' />, text: "Contact Us" },
+		{ icon: <AiOutlineOpenAI className='w-6 h-6' /> , text: "AI Chatbot" },
 		{ icon: <IoMdHelp className='w-6 h-6' />, text: "Help" },
 	]
 
@@ -54,6 +55,7 @@ const LeftSidebar = ({ toggleSidebar }) => {
 					<img className='bg-white' src={VuLogo} alt="" />
 					<img className='bg-white' src={GovLogo} alt="" />
 				</div>
+
 
 				<div className='mx-4 mt-5'>
 					{
@@ -79,10 +81,8 @@ const LeftSidebar = ({ toggleSidebar }) => {
 			</div>
 
 			<div className='flex-1 flex-col md:items-center items-start ml-6'>
-				<Link to="https://vu.edu.pk" target='_blank'>
-					<span className='text-sm font-bold mx-auto'>Virtual University of Pakistan</span>
-					<p className='text-xs text-green-500 mx-auto underline'>Federal Government University</p>
-				</Link>
+					<span className='text-sm font-bold mx-auto'>Online University</span>
+				
 			</div>
 		</div>
 	)

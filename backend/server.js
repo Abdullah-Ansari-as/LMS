@@ -11,6 +11,7 @@ const paymentRoutes = require("./routes/payment-routes.js");
 const progressRoutes = require("./routes/progress-routes.js");
 const nbannounceRoutes = require("./routes/nbannounc-routes.js");
 const notesRoutes = require("./routes/notes-routes.js");
+const geminiRoute = require("./routes/geminiRoute.js")
 
 
 const app = express(); 
@@ -38,6 +39,9 @@ app.use("/api/payments", paymentRoutes);
 app.use("/api/progress", progressRoutes);
 app.use("/api/nbannounce", nbannounceRoutes);
 app.use("/api/notes", notesRoutes);
+
+// Gemini routes
+app.use("/api/gemini", geminiRoute);
 
 app.listen(PORT, () => {
 	console.log(`Server is running on PORT ${PORT}`);

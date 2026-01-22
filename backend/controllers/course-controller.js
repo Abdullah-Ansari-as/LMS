@@ -232,6 +232,8 @@ const uploadQuizFromAdmin = async (req, res) => {
 
 const fetchQuizesById = async (req, res) => {
 	try {
+		
+		console.log("req", req);
 		const { courseId } = req.params;
 
 		const quizzes = await Course.findById(courseId).populate("quizzes").select("quizzes");

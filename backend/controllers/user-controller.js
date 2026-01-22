@@ -220,7 +220,7 @@ const getTopPerformingStudents = async (_, res) => {
 			},
 			{
 				$lookup: {
-					from: "users", // name of your user collection
+					from: "users",
 					localField: "_id",
 					foreignField: "_id",
 					as: "userInfo"
@@ -236,7 +236,7 @@ const getTopPerformingStudents = async (_, res) => {
 				}
 			},
 			{ $sort: { average: -1 } },
-			{ $limit: 4 } // Change this as needed
+			{ $limit: 4 }
 		]);
 
 		res.status(200).json({

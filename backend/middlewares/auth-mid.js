@@ -3,6 +3,7 @@ const User = require("../models/user-model");
 
 const protect = async (req, res, next) => {
 	const authHeader = req.headers.authorization;
+	console.log("authHeaderauthHeader", authHeader);
 
 	if (!authHeader || !authHeader.startsWith("Bearer ")) {
 		return res.status(401).json({ message: "Unauthorized: No token" });

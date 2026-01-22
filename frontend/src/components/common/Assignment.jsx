@@ -47,6 +47,7 @@ const Assignment = () => {
 		};
 	});
 
+
 	useEffect(() => {
 		const getAllSubmittedAssignments = async () => {
 			const res = await fetchSubmittedAssignments();

@@ -31,13 +31,20 @@ const Quiz = () => {
 	}
 
 	const mergedQuizes = quizes.map((quiz, index) => {
-		const title = `Quiz No ${index + 1}`;
+		// const title = `Quiz No ${index + 1}  || Quiz No ${index + 1}`;
+		const possibleTitles  = [
+			`Quiz No ${index + 1}`,
+			`quiz no ${index + 1}`
+		];
 
-		const result = quizesResults.find((res) => res.title === title);
+		const result = quizesResults.find((res) => 
+			// console.log("res", res)
+			possibleTitles.some(t => t?.toLowerCase() === res.title?.toLowerCase())
+		);
 
 		return {
 			...quiz,
-			result: result ? `${result.quizGrade} / 5` : "Not Graded"
+			result: result ? `${result.quizGrade} / ${quiz.totalMarks}` : "Not Graded"
 		}
 	});
 
@@ -73,6 +80,7 @@ const Quiz = () => {
 		try {
 			const quizesGrades = async () => {
 				const result = await getQuizesGrades(singleCourse?.courseName);
+				// console.log("result: ", result);
 				if (result.success) {
 					setQuizesResults(result.quizResults)
 				}
@@ -86,7 +94,7 @@ const Quiz = () => {
 	return (
 		<div className={`mt-18 bg-[#F2F3F8] py-4 px-2 md:px-7 h-auto md:h-full ${mergedQuizes?.length <= 0 || loading ? "h-full" : ""}`}>
 			<div className="flex items-center px-6 py-3 md:py-6">
-				<h2 className='text-2xl mx-auto md:mx-0'>{singleCourse?.courseName}</h2>
+				<h2 className='text-2xl mx-auto md:mx-0 font-semibold'>{singleCourse?.courseName}</h2>
 			</div>
 
 			<div className='bg-white my-3 h-auto'>

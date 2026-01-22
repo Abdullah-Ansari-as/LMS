@@ -22,8 +22,8 @@
 .chatbot-container {
   display: flex;
   flex-direction: column;
-  height: 600px;
-  max-width: 800px;
+  height: 100vh;
+  max-width: 950px;
   margin: 0 auto;
   background: white;
   border-radius: 16px;

@@ -15,6 +15,7 @@ const OpenQuiz = () => {
   const quizIndex = quizes?.findIndex((quiz) => quiz._id === quizId);
   const singleQuizData = quizes?.[quizIndex];
   const quizData = singleQuizData?.quizQuestions || [];
+  // console.log("quizData:", quizData)
 
   const [current, setCurrent] = useState(0);
   const [selectedAnswer, setSelectedAnswer] = useState('');
@@ -47,7 +48,9 @@ const OpenQuiz = () => {
         quizId,
         course: singleQuizData?.selectedCourse,
         quizQuestions: userResponses,
+        quizNo: `Quiz No ${quizIndex + 1}`
       };
+
 
       const submitQuizData = async () => {
         try {
@@ -55,6 +58,7 @@ const OpenQuiz = () => {
           if (result.success) {
             toast.success(result.message);
             dispatch(setSubmittedQuizes(result.submission));
+            // dispatch(clearSubmittedQuizes())
           }
         } catch (error) {
           console.error('Submission failed', error);

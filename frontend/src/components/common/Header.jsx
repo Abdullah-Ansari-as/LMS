@@ -16,6 +16,8 @@ import { FiAlignRight } from "react-icons/fi";
 import { motion, AnimatePresence } from "framer-motion";
 import { BiDotsVerticalRounded } from "react-icons/bi";
 import { RxCross2 } from "react-icons/rx";
+import { AiOutlineOpenAI } from "react-icons/ai";
+
 
 
 const Header = ({ toggleSidebar, sidebarOpen }) => {
@@ -142,6 +144,16 @@ const Header = ({ toggleSidebar, sidebarOpen }) => {
 
 				{/* Navbar for lg screens */}
 				<div className='md:flex items-center hidden'>
+					
+					<div className='mx-5 '>
+						<Link
+							to="/chatbot"
+							className="inline-block transition duration-300 ease-in-out hover:scale-110 hover:text-gray-500 hover:drop-shadow-lg"
+						>
+							<AiOutlineOpenAI className='w-7 h-7 cursor-pointer' />
+						</Link>
+
+					</div>
 					{
 						user?.role === "admin" && <div>
 							<span onClick={() => navigate("/admin")} className='bg-gray-600 hover:bg-gray-700 rounded-2xl tracking-wide text-white text-sm px-2 py-1 cursor-pointer'>
@@ -149,7 +161,8 @@ const Header = ({ toggleSidebar, sidebarOpen }) => {
 							</span>
 						</div>
 					}
-					<div className='mx-5'>
+
+					<div className='mx-4 '>
 						<Link
 							to="/noticeboard"
 							className="inline-block transition duration-300 ease-in-out hover:scale-110 hover:text-yellow-500 hover:drop-shadow-lg"

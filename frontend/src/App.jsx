@@ -33,6 +33,13 @@ import AddNewCourse from "./components/admin/AddNewCourse"
 import ProtectedRoute from "./utils/ProtectedRoute"
 import { useSelector } from "react-redux";
 import { isTokenExpired } from "./utils/checkToken";
+import Chatbot from "./pages/Chatbot";
+import ShowSubmittedSingleQuiz from "./components/admin/ShowSubmittedSingleQuiz";
+// import { stripePromise } from "./stripe";
+// import Checkout from "./pages/CheckoutPage";
+// import { Elements } from "@stripe/react-stripe-js";
+import Success from "./pages/Success";
+import CheckoutPage from "./pages/CheckoutPage";
 
 
 const GuestOnlyRoute = ({ children }) => {
@@ -75,7 +82,10 @@ function App() {
           <Route path="/progress" element={<Progress />}></Route>
           <Route path="/grade-book" element={<GradeBook />}></Route>
           <Route path="/mystudiedcourses" element={<MyStudiedCourses />}></Route>
+          <Route path="/chatbot" element={<Chatbot />}></Route>
           <Route path="/noticeboard" element={<NoticeBoard />}></Route>
+         <Route path="checkout" element={<CheckoutPage />} />
+          <Route path="/success" element={<Success />} ></Route>
         </Route>
 
         {/* Admin Routes */}
@@ -100,6 +110,10 @@ function App() {
         <Route path="/forgot-password" element={<GuestOnlyRoute><ForgotPassword /></GuestOnlyRoute>}></Route>
         <Route path="/login" element={<GuestOnlyRoute><Login /></GuestOnlyRoute>}></Route>
         <Route path="/signup" element={<GuestOnlyRoute><Signup /></GuestOnlyRoute>}></Route>
+
+
+        <Route path="/quiz/:quizId" element={<ShowSubmittedSingleQuiz />}></Route>
+
 
       </Routes>
     </BrowserRouter>

@@ -1,6 +1,5 @@
 import axios from "axios";
 
-// admin api
 export const uploadPayment = async (paymentData) => {
 	try {
 		const res = await axios.post(`${import.meta.env.VITE_BACKEND_URL}/api/payments/upload-payment`, paymentData, {
@@ -22,6 +21,21 @@ export const getPayment = async () => {
 				Authorization: `Bearer ${localStorage.getItem("token")}`
 			}
 		});
+		return res.data;
+	} catch (error) {
+		console.error(error);
+		throw error
+	}
+}
+
+export const createPayment = async (data) => {
+	try {
+		const res = await axios.post(`${import.meta.env.VITE_BACKEND_URL}/api/payments/createPaymentIntent`, data, {
+			headers: {
+				Authorization: `Bearer ${localStorage.getItem("token")}`
+			}
+		});
+
 		return res.data;
 	} catch (error) {
 		console.error(error);

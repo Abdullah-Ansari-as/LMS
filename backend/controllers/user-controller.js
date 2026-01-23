@@ -73,7 +73,7 @@ const login = async (req, res) => {
 
 		// generate token
 		const token = jwt.sign({ userId: user._id }, process.env.JWT_SECRET_KEY, { expiresIn: "1d" });
-		// console.log(token);
+		console.log(token);
 
 		return res.status(200).json({
 			token,
@@ -220,7 +220,7 @@ const getTopPerformingStudents = async (_, res) => {
 			},
 			{
 				$lookup: {
-					from: "users",
+					from: "users", // name of your user collection
 					localField: "_id",
 					foreignField: "_id",
 					as: "userInfo"
@@ -236,7 +236,7 @@ const getTopPerformingStudents = async (_, res) => {
 				}
 			},
 			{ $sort: { average: -1 } },
-			{ $limit: 4 }
+			{ $limit: 4 } // Change this as needed
 		]);
 
 		res.status(200).json({

@@ -21,6 +21,7 @@ const submitQuizSchema = new mongoose.Schema({
 		options: { type: [String], required: true, trim: true },
 		selectedAnswer: { type: String, required: true }
 	}],
+	quizNo: {type: String, required: true},
 	submit: Boolean,
 	result: {
 		type: Number,

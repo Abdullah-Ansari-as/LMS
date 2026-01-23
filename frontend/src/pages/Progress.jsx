@@ -6,7 +6,7 @@ import { getProgress } from "../api/progressApi";
 const Progress = () => {
 
   const allCourses = useSelector((store) => store.course.courses);
-  const [currentId, setCurrentId] = useState(allCourses[0]._id);
+  const [currentId, setCurrentId] = useState(allCourses[0]?._id);
   const [loading, setLoading] = useState(false);
   const [courseName, setCourseName] = useState(allCourses[0]?.courseName);
   const [progressData, setProgressData] = useState([]);

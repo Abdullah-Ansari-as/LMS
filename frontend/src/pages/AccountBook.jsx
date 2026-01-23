@@ -1,42 +1,172 @@
 import React, { useEffect, useState } from "react";
-import { FaCcStripe } from "react-icons/fa";
+import { FaCcStripe, FaCheckCircle, FaTimesCircle, FaClock } from "react-icons/fa";
 import { useSelector } from "react-redux";
-import { getPayment } from "../api/paymentApi";
-import { Loader2 } from "lucide-react";
-
+import { getPayment, updatePaymentStatus } from "../api/paymentApi"; // Import both functions
+import { Loader2, RefreshCw, CheckCircle, XCircle } from "lucide-react";
+import CheckoutForm from "../components/CheckoutForm";
 
 const AccountBook = () => {
-
   const { user } = useSelector((store) => store.user);
   const [transactions, setTransactions] = useState([]);
+  const [summary, setSummary] = useState(null);
   const [loading, setLoading] = useState(false);
+  const [open, setOpen] = useState(false);
+  const [selectedTransaction, setSelectedTransaction] = useState(null);
+  const [refreshing, setRefreshing] = useState(false);
+
+  // Fetch payments function
+  const fetchPayments = async () => {
+    try {
+      setLoading(true);
+      const response = await getPayment(); // Use your updated API function
+      
+      if (response.success) {
+        // Use the transactions array from response (or fallback to getPayment for compatibility)
+        const fetchedTransactions = response.transactions || response.getPayment || [];
+        setTransactions(fetchedTransactions);
+        
+        // Set summary if available
+        if (response.summary) {
+          setSummary(response.summary);
+        }
+        
+        console.log("Fetched transactions:", fetchedTransactions);
+        console.log("Summary:", response.summary);
+        
+        // Example: Log each transaction's status
+        fetchedTransactions.forEach(transaction => {
+          console.log(`Transaction ${transaction.challanNo}:`, {
+            status: transaction.paymentStatus,
+            displayText: transaction.statusDisplay?.text || "Pending",
+            isPaid: transaction.isPaid || false
+          });
+        });
+      } else {
+        console.error("Failed to fetch payments:", response.message);
+        // Set empty arrays to prevent errors
+        setTransactions([]);
+        setSummary({
+          totalTransactions: 0,
+          totalAmount: 0,
+          paidAmount: 0,
+          pendingAmount: 0
+        });
+      }
+    } catch (error) {
+      console.error("Error in fetchPayments:", error);
+      setTransactions([]);
+      setSummary({
+        totalTransactions: 0,
+        totalAmount: 0,
+        paidAmount: 0,
+        pendingAmount: 0
+      });
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  // Refresh payments after successful payment
+  const refreshPayments = async () => {
+    setRefreshing(true);
+    await fetchPayments();
+    setRefreshing(false);
+  };
 
   useEffect(() => {
-    try {
-      const getPayments = async () => {
-        setLoading(true)
-        const res = await getPayment();
-        if (res.success) {
-          setLoading(false)
-          setTransactions(res.getPayment);
-        }
-      }
-      getPayments();
-    } catch (error) {
-      setLoading(false);
-      console.error(error);
+    fetchPayments();
+  }, []);
+
+  // Helper function to get status icon and styling
+  const getStatusDisplay = (transaction) => {
+    // Use the backend statusDisplay if available, otherwise calculate locally
+    if (transaction.statusDisplay) {
+      return transaction.statusDisplay;
     }
-  }, [])
+    
+    // Fallback local calculation
+    const status = transaction.paymentStatus || "pending";
+    switch (status) {
+      case "succeeded":
+        return {
+          text: "Paid",
+          color: "#10b981",
+          bgColor: "bg-green-100",
+          textColor: "text-green-800",
+          icon: <FaCheckCircle className="h-5 w-5 text-green-600" />
+        };
+      case "failed":
+        return {
+          text: "Failed",
+          color: "#ef4444",
+          bgColor: "bg-red-100",
+          textColor: "text-red-800",
+          icon: <FaTimesCircle className="h-5 w-5 text-red-600" />
+        };
+      case "processing":
+        return {
+          text: "Processing",
+          color: "#3b82f6",
+          bgColor: "bg-blue-100",
+          textColor: "text-blue-800",
+          icon: <RefreshCw className="h-4 w-4 animate-spin text-blue-600" />
+        };
+      default:
+        return {
+          text: "Pending",
+          color: "#f59e0b",
+          bgColor: "bg-amber-100",
+          textColor: "text-amber-800",
+          icon: <FaClock className="h-5 w-5 text-amber-600" />,
+          isActionable: true // Mark as clickable for payment
+        };
+    }
+  };
 
   if (loading) {
-    return <div className="flex-1 flex items-center justify-center bg-[#F2F3F8] h-full py-8 px-7">
-      <div><Loader2 className="h-10 w-10 animate-spin" /></div>
-    </div>
+    return (
+      <div className="flex-1 flex items-center justify-center bg-[#F2F3F8] h-full py-8 px-7">
+        <Loader2 className="h-10 w-10 animate-spin" />
+      </div>
+    );
   }
 
   return (
     <div className="mt-18 bg-[#F2F3F8] h-auto md:h-full py-8 px-2 md:px-7">
-      <h1 className="text-2xl flex md:block items-center justify-center text-gray-800 mb-6">My Account Book</h1>
+      {refreshing && (
+        <div className="fixed top-4 right-4 bg-blue-500 text-white px-4 py-2 rounded-lg shadow-lg z-50 flex items-center gap-2">
+          <Loader2 className="h-4 w-4 animate-spin" />
+          Updating payments...
+        </div>
+      )}
+      
+      <h1 className="text-2xl flex md:block items-center justify-center text-gray-800 mb-6">
+        My Account Book
+      </h1>
+
+      {/* Summary Statistics Card - Only show if summary exists */}
+      {summary && (
+        <div className="bg-white rounded-lg shadow-md p-6 mb-8 grid grid-cols-1 md:grid-cols-4 gap-4">
+          <div className="text-center p-4 bg-blue-50 rounded-lg">
+            <p className="text-sm text-gray-600 mb-1">Total Transactions</p>
+            <p className="text-2xl font-bold text-blue-700">{summary.totalTransactions}</p>
+          </div>
+          <div className="text-center p-4 bg-green-50 rounded-lg">
+            <p className="text-sm text-gray-600 mb-1">Total Amount</p>
+            <p className="text-2xl font-bold text-green-700">Rs. {summary.totalAmount}</p>
+          </div>
+          <div className="text-center p-4 bg-purple-50 rounded-lg">
+            <p className="text-sm text-gray-600 mb-1">Paid Amount</p>
+            <p className="text-2xl font-bold text-purple-700">Rs. {summary.paidAmount}</p>
+            <p className="text-xs text-gray-500">{summary.paidCount} transactions</p>
+          </div>
+          <div className="text-center p-4 bg-amber-50 rounded-lg">
+            <p className="text-sm text-gray-600 mb-1">Pending Amount</p>
+            <p className="text-2xl font-bold text-amber-700">Rs. {summary.pendingAmount}</p>
+            <p className="text-xs text-gray-500">{summary.pendingCount} pending</p>
+          </div>
+        </div>
+      )}
 
       {/* Student Info Card */}
       <div className="bg-white rounded-lg shadow-md p-6 mb-8">
@@ -47,78 +177,228 @@ const AccountBook = () => {
           <div>
             <span className="font-semibold">Student Email:</span> {user.email}
           </div>
+          {summary && (
+            <div className="pt-4 border-t">
+              <span className="font-semibold">Payment Summary:</span>{" "}
+              {summary.paidCount} paid, {summary.pendingCount} pending, {summary.failedCount || 0} failed
+            </div>
+          )}
         </div>
       </div>
 
-      {/* md or above screens */}
+      {/* md or above screens - Transactions Table */}
       <div className="bg-white rounded-lg shadow-md overflow-x-auto hidden md:block">
         <table className="min-w-full table-auto text-sm text-left shadow">
           <thead className="bg-[#716ACA] text-white tracking-wider border-b">
             <tr>
               <th className="px-4 py-3 border border-gray-300 text-center">Challan No</th>
               <th className="px-4 py-3 border border-gray-300 text-center">Description</th>
-              <th className="px-4 py-3 border border-gray-300 text-center">Ammount (Rs.)</th>
+              <th className="px-4 py-3 border border-gray-300 text-center">Amount (Rs.)</th>
               <th className="px-4 py-3 border border-gray-300 text-center">Due Date</th>
               <th className="px-4 py-3 border border-gray-300 text-center">Payment Method</th>
               <th className="px-4 py-3 border border-gray-300 text-center">Status</th>
             </tr>
           </thead>
           <tbody className="divide-y">
-            {transactions?.map((item, idx) => (
-              <tr key={idx} className="hover:bg-gray-50">
-                <td className="px-4 py-3 border border-gray-300 text-center">{item.challanNo}</td>
-                <td className="px-4 py-3 border border-gray-300 text-center">{item.description}</td>
-                <td className="px-4 py-3 border border-gray-300 text-center">{item.ammount}</td>
-                <td className="px-4 py-3 border border-gray-300 text-center text-green-700">{item.dueDate || "-"}</td>
-                <td className="px-4 py-3 border border-gray-300 text-center font-semibold">Stripe</td>
-                <td className="px-4 py-3 border border-gray-300 text-center font-semibold">
-                  <button className="cursor-pointer">
-                    <FaCcStripe className="h-7 w-7 hover:w-8 hover:h-8 duration-400 hover:text-gray-700 transition-transform hover:scale-110 ease-in-out" />
-                  </button>
+            {transactions?.map((item, idx) => {
+              const status = getStatusDisplay(item);
+              
+              return (
+                <tr key={idx} className="hover:bg-gray-50">
+                  <td className="px-4 py-3 border border-gray-300 text-center">
+                    {item.challanNo || `CH${idx + 1000}`}
+                  </td>
+                  <td className="px-4 py-3 border border-gray-300 text-center">
+                    {item.description || "Payment"}
+                  </td>
+                  <td className="px-4 py-3 border border-gray-300 text-center">
+                    Rs. {item.ammount || 0}
+                  </td>
+                  <td className="px-4 py-3 border border-gray-300 text-center text-green-700">
+                    {item.dueDate ? new Date(item.dueDate).toLocaleDateString() : "-"}
+                  </td>
+                  <td className="px-4 py-3 border border-gray-300 text-center font-semibold">
+                    {item.paymentMethod || "Stripe"}
+                  </td>
+                  <td className="px-4 py-3 border border-gray-300 text-center">
+                    {status.isActionable ? (
+                      <button
+                        className="cursor-pointer flex items-center justify-center gap-2 px-4 py-2 rounded-lg border border-[#635bff] text-[#635bff] hover:bg-[#635bff] hover:text-white transition-colors"
+                        onClick={() => {
+                          setSelectedTransaction(item);
+                          setOpen(true);
+                        }}
+                      >
+                        <FaCcStripe className="h-5 w-5" />
+                        <span className="font-medium">Pay Now</span>
+                      </button>
+                    ) : (
+                      <div className={`flex items-center justify-center gap-2 px-4 py-2 rounded-lg ${status.bgColor} ${status.textColor} border`}>
+                        {status.icon}
+                        <span className="font-medium">{status.text}</span>
+                      </div>
+                    )}
+                  </td>
+                </tr>
+              );
+            })}
+            
+            {/* Empty state */}
+            {transactions.length === 0 && !loading && (
+              <tr>
+                <td colSpan="6" className="px-4 py-8 text-center text-gray-500">
+                  No transactions found. Your payments will appear here.
                 </td>
               </tr>
-            ))}
+            )}
           </tbody>
         </table>
       </div>
- 
-      {/* small screens only */}
+
+      {/* small screens only - Mobile Cards */}
       <div className="block md:hidden space-y-4">
-        {transactions?.map((item, idx) => (
-          <div key={idx} className="bg-white border border-gray-200 rounded-lg p-4 shadow-md space-y-2">
-            <div className="flex justify-between text-sm">
-              <span className="font-medium text-gray-600">Challan No:</span>
-              <span>{item.challanNo}</span>
+        {transactions?.map((item, idx) => {
+          const status = getStatusDisplay(item);
+          
+          return (
+            <div key={idx} className="bg-white border border-gray-200 rounded-lg p-4 shadow-md space-y-2">
+              <div className="flex justify-between text-sm">
+                <span className="font-medium text-gray-600">Challan No:</span>
+                <span>{item.challanNo || `CH${idx + 1000}`}</span>
+              </div>
+              <div className="flex justify-between text-sm">
+                <span className="font-medium text-gray-600">Description:</span>
+                <span className="text-right">{item.description || "Payment"}</span>
+              </div>
+              <div className="flex justify-between text-sm">
+                <span className="font-medium text-gray-600">Amount (Rs.):</span>
+                <span>Rs. {item.ammount || 0}</span>
+              </div>
+              <div className="flex justify-between text-sm text-green-700">
+                <span className="font-medium text-gray-600">Due Date:</span>
+                <span>{item.dueDate ? new Date(item.dueDate).toLocaleDateString() : "-"}</span>
+              </div>
+              <div className="flex justify-between text-sm">
+                <span className="font-medium text-gray-600">Payment Method:</span>
+                <span className="font-semibold">{item.paymentMethod || "Stripe"}</span>
+              </div>
+              <div className="flex justify-between items-center text-sm pt-2 border-t">
+                <span className="font-medium text-gray-600">Status:</span>
+                {status.isActionable ? (
+                  <button
+                    className="cursor-pointer flex items-center gap-2 px-3 py-1.5 rounded-lg border border-[#635bff] text-[#635bff] hover:bg-[#635bff] hover:text-white transition-colors"
+                    onClick={() => {
+                      setSelectedTransaction(item);
+                      setOpen(true);
+                    }}
+                  >
+                    <FaCcStripe className="h-4 w-4" />
+                    <span className="font-medium">Pay Now</span>
+                  </button>
+                ) : (
+                  <div className={`flex items-center gap-2 px-3 py-1.5 rounded-lg ${status.bgColor} ${status.textColor} border`}>
+                    {status.icon}
+                    <span className="font-medium">{status.text}</span>
+                  </div>
+                )}
+              </div>
             </div>
-            <div className="flex justify-between text-sm">
-              <span className="font-medium text-gray-600">Description:</span>
-              <span className="text-right">{item.description}</span>
-            </div>
-            <div className="flex justify-between text-sm">
-              <span className="font-medium text-gray-600">Amount (Rs.):</span>
-              <span>{item.ammount}</span>
-            </div>
-            <div className="flex justify-between text-sm text-green-700">
-              <span className="font-medium text-gray-600">Due Date:</span>
-              <span>{item.dueDate || "-"}</span>
-            </div>
-            <div className="flex justify-between text-sm">
-              <span className="font-medium text-gray-600">Payment Method:</span>
-              <span className="font-semibold">Stripe</span>
-            </div>
-            <div className="flex justify-between items-center text-sm">
-              <span className="font-medium text-gray-600">Status:</span>
-              <button className="cursor-pointer">
-                <FaCcStripe className="h-7 w-7 hover:w-8 hover:h-8 duration-400 hover:text-gray-700 transition-transform hover:scale-110 ease-in-out" />
-              </button>
-            </div>
+          );
+        })}
+        
+        {/* Empty state for mobile */}
+        {transactions.length === 0 && !loading && (
+          <div className="bg-white border border-gray-200 rounded-lg p-8 text-center">
+            <p className="text-gray-500 mb-2">No transactions found</p>
+            <p className="text-sm text-gray-400">Your payments will appear here once available.</p>
           </div>
-        ))}
+        )}
       </div>
 
-
+      {/* Payment Modal */}
+      {open && selectedTransaction && (
+        <PaymentModal
+          transaction={selectedTransaction}
+          onClose={() => {
+            setOpen(false);
+            setSelectedTransaction(null);
+            // Refresh payments after modal closes
+            refreshPayments();
+          }}
+          onPaymentSuccess={refreshPayments}
+        />
+      )}
     </div>
   );
 };
 
 export default AccountBook;
+
+// Updated PaymentModal with onPaymentSuccess callback
+const PaymentModal = ({ onClose, transaction, onPaymentSuccess }) => {
+  const [paymentCompleted, setPaymentCompleted] = useState(false);
+
+  const handlePaymentSuccess = () => {
+    setPaymentCompleted(true);
+    // Call the success callback after a delay
+    setTimeout(() => {
+      onClose();
+      if (onPaymentSuccess) onPaymentSuccess();
+    }, 2000);
+  };
+
+  return (
+    <div className="fixed inset-0 bg-black/50 flex items-center justify-center z-50 p-4">
+      <div className="bg-white rounded-lg p-6 w-full max-w-md relative max-h-[90vh] overflow-y-auto">
+        <button
+          onClick={onClose}
+          className="absolute top-3 right-3 text-gray-500 hover:text-black text-2xl"
+        >
+          ✕
+        </button>
+
+        <h2 className="text-xl font-semibold mb-4">
+          {paymentCompleted ? "Payment Successful!" : "Complete Payment"}
+        </h2>
+
+        {paymentCompleted ? (
+          <div className="text-center py-8">
+            <FaCheckCircle className="h-16 w-16 text-green-500 mx-auto mb-4" />
+            <p className="text-lg font-medium text-gray-800 mb-2">
+              Payment Successful!
+            </p>
+            <p className="text-gray-600">
+              Your payment of <strong>Rs. {transaction?.ammount}</strong> for challan{" "}
+              <strong>{transaction?.challanNo}</strong> has been processed successfully.
+            </p>
+            <div className="mt-6 p-4 bg-green-50 rounded-lg border border-green-200">
+              <p className="text-sm text-green-700">
+                ✅ The transaction status will be updated automatically.
+              </p>
+            </div>
+          </div>
+        ) : (
+          <>
+            <div className="mb-6 p-4 bg-gray-50 rounded-lg">
+              <p className="mb-2">
+                <strong>Challan No:</strong> {transaction?.challanNo}
+              </p>
+              <p className="mb-2">
+                <strong>Description:</strong> {transaction?.description}
+              </p>
+              <p className="text-lg font-semibold">
+                <strong>Amount:</strong> Rs. {transaction?.ammount}
+              </p>
+            </div>
+
+            <CheckoutForm 
+              amount={transaction?.ammount} 
+              transactionId={transaction?._id || transaction?.challanNo}
+              onSuccess={handlePaymentSuccess}
+            />
+          </>
+        )}
+      </div>
+    </div>
+  );
+};

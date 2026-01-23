@@ -12,10 +12,10 @@ const progressRoutes = require("./routes/progress-routes.js");
 const nbannounceRoutes = require("./routes/nbannounc-routes.js");
 const notesRoutes = require("./routes/notes-routes.js");
 const geminiRoute = require("./routes/geminiRoute.js");
-const commentRoute = require("./routes/comment-routes.js")
+const commentRoute = require("./routes/comment-routes.js") 
 
 
-const app = express(); 
+const app = express();  
 
 app.use(express.static("public"));
 app.use(express.json({ limit: "10mb" })); // must allow big body size

@@ -39,6 +39,9 @@ const ViewCourse = () => {
 
   const isOpen = useSelector((state) => state.ui.isLectureModalOpen);
 
+
+
+
   const openModal = (lecture) => {
     setCurrentLecture(lecture);
     dispatch(openLectureModal());
@@ -354,16 +357,7 @@ const ViewCourse = () => {
                         Video
                       </span>
                     </div>
-                    <div className="flex items-center gap-4">
-                      <span className="flex items-center text-xs text-green-600 font-medium">
-                        <FaComments className="mr-1" />
-                        Open for discussion
-                      </span>
-                      <span className="flex items-center text-xs text-gray-600">
-                        <IoMdTime className="mr-1" />
-                        {lecture.duration || "N/A"}
-                      </span>
-                    </div>
+                  
                   </div>
 
                   {lecture.description && (
@@ -469,25 +463,11 @@ const ViewCourse = () => {
               {/* Comments Section - Right Side (1/3 on desktop) */}
               <div className="lg:w-1/3 w-full border-l border-gray-200">
                 <div className="h-full flex flex-col">
-                  {/* Comments Header */}
-                  <div className="border-b p-4">
-                    <div className="flex items-center justify-between">
-                      <h3 className="font-semibold text-gray-800 flex items-center">
-                        <FaComments className="mr-2 text-blue-500" />
-                        Discussion
-                      </h3>
-                      <span className="text-xs bg-blue-100 text-blue-600 px-2 py-1 rounded-full">
-                        24 Comments
-                      </span>
-                    </div>
-                    <p className="text-xs text-gray-500 mt-1">
-                      Share your thoughts and ask questions
-                    </p>
-                  </div>
+                
 
                   {/* Comments List */}
                   <div className="flex-1 overflow-y-auto p-4">
-                    <CommentSection />
+                    <CommentSection isOpen={isOpen} />
                   </div>
 
                   {/* Quick Stats */}

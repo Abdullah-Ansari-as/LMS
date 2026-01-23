@@ -34,6 +34,6 @@ export default function ProtectedRoute({ children }) {
 		return <Navigate to="/login" replace />;
 	}
 
-	// ✅ All good: show protected content
+	// All good: show protected content
 	return children;
 }

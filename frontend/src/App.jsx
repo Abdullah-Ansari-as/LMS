@@ -35,9 +35,9 @@ import { useSelector } from "react-redux";
 import { isTokenExpired } from "./utils/checkToken";
 import Chatbot from "./pages/Chatbot";
 import ShowSubmittedSingleQuiz from "./components/admin/ShowSubmittedSingleQuiz";
-import { stripePromise } from "./stripe";
-import Checkout from "./pages/CheckoutPage";
-import { Elements } from "@stripe/react-stripe-js";
+// import { stripePromise } from "./stripe";
+// import Checkout from "./pages/CheckoutPage";
+// import { Elements } from "@stripe/react-stripe-js";
 import Success from "./pages/Success";
 import CheckoutPage from "./pages/CheckoutPage";
 

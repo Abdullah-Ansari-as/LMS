@@ -1,207 +1,321 @@
 import axios from "axios";
 
 export const getAllCourses = async () => {
-	try {
-		const res = await axios.get(`${import.meta.env.VITE_BACKEND_URL}/api/courses/getAllCourses`, {
-			headers: {
-				Authorization: `Bearer ${localStorage.getItem("token")}`
-			}
-		});
-		return res.data
-	} catch (error) {
-		console.log(error);
-		throw error
-	}
-}
+  try {
+    const res = await axios.get(
+      `${import.meta.env.VITE_BACKEND_URL}/api/courses/getAllCourses`,
+      {
+        headers: {
+          Authorization: `Bearer ${localStorage.getItem("token")}`,
+        },
+      }
+    );
+    return res.data;
+  } catch (error) {
+    console.log(error);
+    throw error;
+  }
+};
 
 // admin api
 export const uploadAssignmentByAdmin = async (data) => {
-	try {
-		const res = await axios.post(`${import.meta.env.VITE_BACKEND_URL}/api/courses/uploadAssignmentFromAdmin`, data, {
-			headers: {
-				Authorization: `Bearer ${localStorage.getItem("token")}`
-			}
-		});
-		return res.data;
-	} catch (error) {
-		console.error(error);
-		throw error
-	}
-}
+  try {
+    const res = await axios.post(
+      `${
+        import.meta.env.VITE_BACKEND_URL
+      }/api/courses/uploadAssignmentFromAdmin`,
+      data,
+      {
+        headers: {
+          Authorization: `Bearer ${localStorage.getItem("token")}`,
+        },
+      }
+    );
+    return res.data;
+  } catch (error) {
+    console.error(error);
+    throw error;
+  }
+};
 
 export const fetchAssignmentsById = async (courseId) => {
-	try {
-		const res = await axios.get(`${import.meta.env.VITE_BACKEND_URL}/api/courses/fetchAssignmentsById/${courseId}`, {
-			headers: {
-				Authorization: `Bearer ${localStorage.getItem("token")}`
-			}
-		});
-		return res.data;
-	} catch (error) {
-		console.log(error);
-		throw error
-	}
-}
+  try {
+    const res = await axios.get(
+      `${
+        import.meta.env.VITE_BACKEND_URL
+      }/api/courses/fetchAssignmentsById/${courseId}`,
+      {
+        headers: {
+          Authorization: `Bearer ${localStorage.getItem("token")}`,
+        },
+      }
+    );
+    return res.data;
+  } catch (error) {
+    console.log(error);
+    throw error;
+  }
+};
 
 export const submitAssignment = async (file, id) => {
-	try {
-		const formData = new FormData();
-		formData.append("file", file);
+  try {
+    const formData = new FormData();
+    formData.append("file", file);
 
-		const res = await axios.post(`${import.meta.env.VITE_BACKEND_URL}/api/courses/submitAssignment/${id}`, formData, {
-			headers: {
-				Authorization: `Bearer ${localStorage.getItem("token")}`,
-				"Content-Type": "multipart/form-data",
-			}
-		})
-		return res.data;
-	} catch (error) {
-		console.log(error);
-		throw error
-	}
-}
+    const res = await axios.post(
+      `${import.meta.env.VITE_BACKEND_URL}/api/courses/submitAssignment/${id}`,
+      formData,
+      {
+        headers: {
+          Authorization: `Bearer ${localStorage.getItem("token")}`,
+          "Content-Type": "multipart/form-data",
+        },
+      }
+    );
+    return res.data;
+  } catch (error) {
+    console.log(error);
+    throw error;
+  }
+};
 
 // admin api
 export const uploadQuizByAdmin = async (data) => {
-	try {
-		const res = await axios.post(`${import.meta.env.VITE_BACKEND_URL}/api/courses/uploadQuizFromAdmin`, data, {
-			headers: {
-				Authorization: `Bearer ${localStorage.getItem("token")}`
-			}
-		});
-		return res.data;
-	} catch (error) {
-		console.error(error);
-		throw error
-	}
-}
-
+  try {
+    const res = await axios.post(
+      `${import.meta.env.VITE_BACKEND_URL}/api/courses/uploadQuizFromAdmin`,
+      data,
+      {
+        headers: {
+          Authorization: `Bearer ${localStorage.getItem("token")}`,
+        },
+      }
+    );
+    return res.data;
+  } catch (error) {
+    console.error(error);
+    throw error;
+  }
+};
 
 export const fetchQuizesById = async (courseId) => {
-	try {
-		const res = await axios.get(`${import.meta.env.VITE_BACKEND_URL}/api/courses/fetchQuizesById/${courseId}`, {
-			headers: {
-				Authorization: `Bearer ${localStorage.getItem("token")}`
-			}
-		});
-		return res.data;
-	} catch (error) {
-		console.log(error);
-		throw error
-	}
-}
+  try {
+    const res = await axios.get(
+      `${
+        import.meta.env.VITE_BACKEND_URL
+      }/api/courses/fetchQuizesById/${courseId}`,
+      {
+        headers: {
+          Authorization: `Bearer ${localStorage.getItem("token")}`,
+        },
+      }
+    );
+    return res.data;
+  } catch (error) {
+    console.log(error);
+    throw error;
+  }
+};
 
 export const submitQuiz = async (quizId, data) => {
-	try {
-		const res = await axios.post(`${import.meta.env.VITE_BACKEND_URL}/api/courses/submitQuiz/${quizId}`, data, {
-			headers: {
-				Authorization: `Bearer ${localStorage.getItem("token")}`
-			}
-		});
-		return res.data;
-	} catch (error) {
-		console.error(error);
-	}
-}
+  try {
+    const res = await axios.post(
+      `${import.meta.env.VITE_BACKEND_URL}/api/courses/submitQuiz/${quizId}`,
+      data,
+      {
+        headers: {
+          Authorization: `Bearer ${localStorage.getItem("token")}`,
+        },
+      }
+    );
+    return res.data;
+  } catch (error) {
+    console.error(error);
+  }
+};
 
 // admin api
 export const uploadCourseAnnouncement = async (data) => {
-	try {
-		const res = await axios.post(`${import.meta.env.VITE_BACKEND_URL}/api/courses/uploadAnnouncement`, data, {
-			headers: {
-				Authorization: `Bearer ${localStorage.getItem("token")}`,
-			}
-		})
-		return res.data
-	} catch (error) {
-		console.error(error);
-		throw error
-	}
-}
+  try {
+    const res = await axios.post(
+      `${import.meta.env.VITE_BACKEND_URL}/api/courses/uploadAnnouncement`,
+      data,
+      {
+        headers: {
+          Authorization: `Bearer ${localStorage.getItem("token")}`,
+        },
+      }
+    );
+    return res.data;
+  } catch (error) {
+    console.error(error);
+    throw error;
+  }
+};
 
 export const getCourseAnnouncement = async (courseId) => {
-	try {
-		const res = await axios.get(`${import.meta.env.VITE_BACKEND_URL}/api/courses/getAnnouncementsByCourseId/${courseId}`, {
-			headers: {
-				Authorization: `Bearer ${localStorage.getItem("token")}`,
-			}
-		})
-		return res.data;
-	} catch (error) {
-		console.log(error);
-		throw error
-	}
-}
+  try {
+    const res = await axios.get(
+      `${
+        import.meta.env.VITE_BACKEND_URL
+      }/api/courses/getAnnouncementsByCourseId/${courseId}`,
+      {
+        headers: {
+          Authorization: `Bearer ${localStorage.getItem("token")}`,
+        },
+      }
+    );
+    return res.data;
+  } catch (error) {
+    console.log(error);
+    throw error;
+  }
+};
 
 // admin api
 export const uploadNewCourse = async (newCourseData) => {
-	try {
-		const res = await axios.post(`${import.meta.env.VITE_BACKEND_URL}/api/courses/newCourse`, newCourseData, {
-			headers: {
-				Authorization: `Bearer ${localStorage.getItem("token")}`,
-			}
-		})
-		return res.data;
-	} catch (error) {
-		console.error(error);
-		throw error
-	}
-}
+  try {
+    const res = await axios.post(
+      `${import.meta.env.VITE_BACKEND_URL}/api/courses/newCourse`,
+      newCourseData,
+      {
+        headers: {
+          Authorization: `Bearer ${localStorage.getItem("token")}`,
+        },
+      }
+    );
+    return res.data;
+  } catch (error) {
+    console.error(error);
+    throw error;
+  }
+};
 
 // admin api
 export const uploadLecture = async (LectureData) => {
-	try {
-		const res = await axios.post(`${import.meta.env.VITE_BACKEND_URL}/api/courses/uploadLecture`, LectureData, {
-			headers: {
-				Authorization: `Bearer ${localStorage.getItem("token")}`,
-			}
-		})
-		return res.data;
-	} catch (error) {
-		console.error(error);
-		throw error
-	}
-}
+  try {
+    const res = await axios.post(
+      `${import.meta.env.VITE_BACKEND_URL}/api/courses/uploadLecture`,
+      LectureData,
+      {
+        headers: {
+          Authorization: `Bearer ${localStorage.getItem("token")}`,
+        },
+      }
+    );
+    return res.data;
+  } catch (error) {
+    console.error(error);
+    throw error;
+  }
+};
 
 // admin api
 export const getTotalAnnouncements = async () => {
-	try {
-		const res = await axios.get(`${import.meta.env.VITE_BACKEND_URL}/api/courses/getTotalAnnouncements`, {
-			headers: {
-				Authorization: `Bearer ${localStorage.getItem("token")}`,
-			}
-		})
-		return res.data;
-	} catch (error) {
-		console.error(error);
-		throw error
-	}
-}
+  try {
+    const res = await axios.get(
+      `${import.meta.env.VITE_BACKEND_URL}/api/courses/getTotalAnnouncements`,
+      {
+        headers: {
+          Authorization: `Bearer ${localStorage.getItem("token")}`,
+        },
+      }
+    );
+    return res.data;
+  } catch (error) {
+    console.error(error);
+    throw error;
+  }
+};
 
 export const fetchSubmittedAssignments = async () => {
-	try {
-		const res = await axios.get(`${import.meta.env.VITE_BACKEND_URL}/api/courses/fetchSubmittedAssignments`, {
-			headers: {
-				Authorization: `Bearer ${localStorage.getItem("token")}`,
-			}
-		})
-		return res.data;
-	} catch (error) {
-		console.error(error);
-		throw error
-	}
-}
+  try {
+    const res = await axios.get(
+      `${
+        import.meta.env.VITE_BACKEND_URL
+      }/api/courses/fetchSubmittedAssignments`,
+      {
+        headers: {
+          Authorization: `Bearer ${localStorage.getItem("token")}`,
+        },
+      }
+    );
+    return res.data;
+  } catch (error) {
+    console.error(error);
+    throw error;
+  }
+};
 
 export const fetchSubmittedQuizes = async () => {
-	try {
-		const res = await axios.get(`${import.meta.env.VITE_BACKEND_URL}/api/courses/fetchSubmittedQuizes`, {
-			headers: {
-				Authorization: `Bearer ${localStorage.getItem("token")}`,
-			}
-		})
-		return res.data;
-	} catch (error) {
-		console.error(error);
-		throw error
-	}
+  try {
+    const res = await axios.get(
+      `${import.meta.env.VITE_BACKEND_URL}/api/courses/fetchSubmittedQuizes`,
+      {
+        headers: {
+          Authorization: `Bearer ${localStorage.getItem("token")}`,
+        },
+      }
+    );
+    return res.data;
+  } catch (error) {
+    console.error(error);
+    throw error;
+  }
+};
+
+export const deleteCourseLecture = async (courseId, lectureId) => {
+  try {
+    const res = await axios.delete(
+      `${
+        import.meta.env.VITE_BACKEND_URL
+      }/api/courses/deleteCourseLecture/${courseId}/lectures/${lectureId}`,
+      {
+        headers: {
+          Authorization: `Bearer ${localStorage.getItem("token")}`,
+        },
+      }
+    );
+    return res.data;
+  } catch (error) {
+    console.error(error.message);
+    throw error;
+  }
+};
+
+export const fetchSingleQuiz = async (quizId, data) => {
+  try {
+    const res = await axios.post(
+      `${
+        import.meta.env.VITE_BACKEND_URL
+      }/api/courses/fetchSingleQuiz/${quizId}`,
+      data,
+      {
+        headers: {
+          Authorization: `Bearer ${localStorage.getItem("token")}`,
+        },
+      }
+    );
+    return res.data;
+  } catch (error) {
+    console.error(error.message);
+    throw error;
+  }
+};
+
+export const fetchAndCompareQuiz = async(quizId, data)=> {
+  try {
+    const res = await axios.post(`${import.meta.env.VITE_BACKEND_URL}/api/courses/fetchAndCompareQuiz/${quizId}`,
+      data,
+      {
+         headers: {
+          Authorization: `Bearer ${localStorage.getItem("token")}`,
+        },
+      }
+    )
+    return res.data;
+  } catch (error) {
+     console.error(error.message);
+    throw error;
+  }
 }

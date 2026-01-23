@@ -1,7 +1,7 @@
 const express = require("express");
 const { isAdmin } = require("../middlewares/admin-mid.js");
 const { protect } = require('../middlewares/auth-mid.js');
-const { newCourse, uploadLecture, getAllCourses, uploadAssignmentFormAdmin, submitAssignment, uploadQuizFromAdmin, fetchAssignmentsById, fetchQuizesById, submitQuiz, uploadAnnouncement, getAnnouncementsByCourseId, getTotalAnnouncements, fetchSubmittedAssignments, fetchSubmittedQuizes } = require("../controllers/course-controller.js");
+const { newCourse, uploadLecture, getAllCourses, uploadAssignmentFormAdmin, submitAssignment, uploadQuizFromAdmin, fetchAssignmentsById, fetchQuizesById, submitQuiz, uploadAnnouncement, getAnnouncementsByCourseId, getTotalAnnouncements, fetchSubmittedAssignments, fetchSubmittedQuizes, deleteCourseLecture, fetchSingleQuiz, fetchAndCompareQuiz } = require("../controllers/course-controller.js");
 const { upload } = require("../utils/uploadAssignment.js")
 const path = require("path");
 
@@ -21,6 +21,9 @@ router.get("/getAnnouncementsByCourseId/:courseId", protect, getAnnouncementsByC
 router.get("/getTotalAnnouncements", protect, isAdmin, getTotalAnnouncements);
 router.get("/fetchSubmittedAssignments", protect, fetchSubmittedAssignments);
 router.get("/fetchSubmittedQuizes", protect, fetchSubmittedQuizes);
+router.delete("/deleteCourseLecture/:courseId/lectures/:lectureId", protect, deleteCourseLecture);
+router.post("/fetchSingleQuiz/:quizId", protect, fetchSingleQuiz);
+router.post("/fetchAndCompareQuiz/:quizId", protect, fetchAndCompareQuiz);
 
 
 router.get("/download/:filename", (req, res) => {

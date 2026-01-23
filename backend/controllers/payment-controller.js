@@ -1,4 +1,8 @@
-const Payment = require("../models/payment-model.js")
+const { default: Stripe } = require("stripe");
+const Payment = require("../models/payment-model.js");
+
+const stripe = new Stripe(process.env.STRIPE_SECRET_KEY);
+
 
 const payment = async (req, res) => {
 	try {
@@ -49,4 +53,24 @@ const getPayment = async (req, res) => {
 	}
 }
 
-module.exports = {payment, getPayment};
+const createPaymentIntent = async (req, res) => {
+  try {
+    const { amount  } = req.body; // amount in cents
+
+    const paymentIntent = await stripe.paymentIntents.create({
+      amount,
+      currency: "usd",
+      automatic_payment_methods: {
+        enabled: true,
+      },
+    });
+
+    res.status(200).json({
+      clientSecret: paymentIntent.client_secret,
+    });
+  } catch (error) {
+    res.status(500).json({ error: error.message });
+  }
+};
+
+module.exports = {payment, getPayment, createPaymentIntent};

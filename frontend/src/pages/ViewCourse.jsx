@@ -39,9 +39,6 @@ const ViewCourse = () => {
 
   const isOpen = useSelector((state) => state.ui.isLectureModalOpen);
 
-
-
-
   const openModal = (lecture) => {
     setCurrentLecture(lecture);
     dispatch(openLectureModal());
@@ -357,7 +354,6 @@ const ViewCourse = () => {
                         Video
                       </span>
                     </div>
-                  
                   </div>
 
                   {lecture.description && (
@@ -385,9 +381,9 @@ const ViewCourse = () => {
       {/* Modal */}
       {isOpen && currentLecture && (
         <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/80 backdrop-blur-sm">
-          <div className="relative mx-4 h-[90vh] w-full max-w-6xl flex flex-col rounded-xl bg-white shadow-2xl">
+          <div className="relative mx-4 h-[90vh] w-full max-w-7xl flex flex-col rounded-xl bg-white shadow-2xl">
             {/* Header */}
-            <div className="flex items-center justify-between border-b px-6 py-4">
+            <div className="flex items-center justify-between border-b px-6 py-1">
               <div>
                 <h2 className="text-lg font-semibold text-gray-800">
                   {currentLecture.lectureTitle || "Lecture Video"}
@@ -431,7 +427,6 @@ const ViewCourse = () => {
                 {/* Lecture Info */}
                 <div className="mt-4 space-y-3">
                   <div>
-                  
                     <p className="text-sm text-gray-600 bg-gray-50 p-3 rounded">
                       {currentLecture.description || "No description provided."}
                     </p>
@@ -460,38 +455,20 @@ const ViewCourse = () => {
                 </div>
               </div>
 
-              {/* Comments Section - Right Side (1/3 on desktop) */}
               <div className="lg:w-1/3 w-full border-l border-gray-200">
-                <div className="h-full flex flex-col">
-                
+                <div className="h-full flex flex-col relative">
+                  {/* Comments Section Header */}
+                  <div className="border-b border-gray-200 p-3">
+                    <h3 className="text-lg font-semibold text-gray-800">
+                      Comments
+                    </h3>
+                    <p className="text-sm text-gray-500">comments</p>
+                  </div>
 
-                  {/* Comments List */}
-                  <div className="flex-1 overflow-y-auto p-4">
+                  <div className="flex-1 overflow-hidden relative">
                     <CommentSection isOpen={isOpen} />
                   </div>
-
-                  {/* Quick Stats */}
-                  <div className=" p-4 bg-gray-50">
-                    <div className="flex items-center justify-between text-sm">
-                      <div className="flex items-center"></div>
-                    </div>
-                  </div>
                 </div>
-              </div>
-            </div>
-
-            {/* Footer */}
-            <div className="px-6 py-4 bg-gray-50">
-              <div className="flex items-center justify-between">
-                <div className="flex items-center space-x-4">
-                 
-                </div>
-                <button
-                  onClick={() => dispatch(closeLectureModal())}
-                  className="px-5 py-2 bg-red-600 hover:bg-red-700 text-white font-medium rounded-lg transition-colors"
-                >
-                  Close Lecture
-                </button>
               </div>
             </div>
           </div>

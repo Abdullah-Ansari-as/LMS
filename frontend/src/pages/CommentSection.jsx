@@ -1,5 +1,6 @@
 import React, { useEffect, useState } from "react";
 import { createComment, getAllComments } from "../api/commentApi.js";
+import { useSelector } from "react-redux";
 
 const CommentSection = ({ isOpen }) => {
   const [comment, setComment] = useState("");
@@ -7,6 +8,11 @@ const CommentSection = ({ isOpen }) => {
   const [loading, setLoading] = useState(false);
 
   console.log("comments: ", comments)
+
+  	const { user } = useSelector((store) => store.user);
+
+    console.log("user: ", user)
+
 
   useEffect(() => {
     if (!isOpen) return;
@@ -46,16 +52,16 @@ const CommentSection = ({ isOpen }) => {
         <div className="flex items-center space-x-3 mb-6 p-4 border-b border-gray-200">
           <div className="relative flex-shrink-0">
             <img
-              src="https://via.placeholder.com/40x40"
+              src={user.profilePicture}
               alt="User profile"
               className="h-10 w-10 rounded-full border-2 border-white shadow-sm object-cover"
             />
-            <div className="absolute bottom-0 right-0 h-3 w-3 rounded-full bg-green-500 border border-white" />
+            <div className="absolute bottom-0 right-0 h-3 w-3 rounded-full" />
           </div>
 
           <div className="flex-1 min-w-0">
-            <p className="text-sm font-semibold text-gray-900">John Doe</p>
-            <p className="text-xs text-gray-500">@johndoe</p>
+            <p className="text-sm font-semibold text-gray-900">{user?.name}</p>
+            <p className="text-xs text-gray-500">@{user?.name.toLowerCase()}</p>
           </div>
         </div>
 

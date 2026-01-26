@@ -8,6 +8,6 @@ const router = express.Router();
 router.post("/upload-payment", protect, isAdmin, payment);
 router.get("/get-payment", getPayment);
 router.post("/createPaymentIntent", createPaymentIntent);
-router.post("/update-status", updatePaymentStatus);
+// router.post("/update-status", updatePaymentStatus);
 
 module.exports = router;

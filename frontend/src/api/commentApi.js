@@ -52,6 +52,7 @@ export const getAllComments = async () => {
       }
     );
 
+    console.log(res.data)
     return res.data;
   } catch (error) {
     console.error(error);

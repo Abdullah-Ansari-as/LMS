@@ -297,3 +297,9 @@
 .StripeElement--webkit-autofill {
   background-color: #fefde5 !important;
 }
+
+.input-ltr {
+  direction: ltr;
+  unicode-bidi: plaintext;
+  text-align: left;
+}

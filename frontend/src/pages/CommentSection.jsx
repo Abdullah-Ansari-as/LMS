@@ -1,16 +1,19 @@
-import React, { useEffect, useRef, useState } from "react";
+import { useEffect, useRef, useState } from "react";
+import { useSelector } from "react-redux";
 import {
   createComment,
-  getAllComments,
   addReply,
   deleteComment,
+  deleteReply,
+  getCommentsByLecture,
 } from "../api/commentApi.js";
-import { useSelector } from "react-redux";
 import dayjs from "dayjs";
 import relativeTime from "dayjs/plugin/relativeTime";
 import { toast } from "sonner";
-import { BsThreeDotsVertical } from "react-icons/bs";
-const CommentSection = ({ isOpen, comments, setComments }) => {
+import "../../src/index.css";
+import CommentItem from "./CommentItem.jsx";
+
+const CommentSection = ({ isOpen, comments, setComments, selectLecture }) => {
   const [comment, setComment] = useState("");
   const [replyingTo, setReplyingTo] = useState(null);
   const [replyText, setReplyText] = useState("");
@@ -20,22 +23,23 @@ const CommentSection = ({ isOpen, comments, setComments }) => {
   const [openMenuId, setOpenMenuId] = useState(null);
   const { user } = useSelector((store) => store.user);
 
-  //   console.log("comments: ", comments);
-
   useEffect(() => {
-    if (!isOpen) return;
+    if (!isOpen || !selectLecture) return;
 
     const fetchComments = async () => {
       try {
-        const data = await getAllComments();
-        setComments(data);
+        // const data = await getAllComments();
+        // setComments(data);
+        const data = await getCommentsByLecture(selectLecture);
+        console.log("datadatadatadata: ", data);
+        setComments([...data]);
       } catch (error) {
         console.log(error.message);
       }
     };
 
     fetchComments();
-  }, [isOpen]);
+  }, [isOpen, selectLecture]);
 
   useEffect(() => {
     const handleClickOutside = (e) => {
@@ -47,6 +51,7 @@ const CommentSection = ({ isOpen, comments, setComments }) => {
     document.addEventListener("mousedown", handleClickOutside);
     return () => document.removeEventListener("mousedown", handleClickOutside);
   }, []);
+
 
   const commentRef = useRef(null);
   const menuRef = useRef(null);
@@ -66,8 +71,29 @@ const CommentSection = ({ isOpen, comments, setComments }) => {
         toast.success("Comment deleted successfully!");
       }
 
-      const data = await getAllComments();
-      setComments(data);
+      setComments((prev) => prev.filter((c) => c._id !== comment._id));
+    } catch (error) {
+      console.log(error.message);
+    }
+  };
+
+  const handleDeleteReply = async (commentId, replyId) => {
+    try {
+      await deleteReply(commentId, replyId);
+
+      toast.success("Reply deleted successfully!!");
+
+
+        setComments(prev => 
+          prev.map(comment => 
+            comment._id === commentId ? {
+              ...comment,
+              replies: comment.replies.filter(
+                reply => reply._id !== replyId
+              )
+            } : comment
+          )
+        )
     } catch (error) {
       console.log(error.message);
     }
@@ -78,13 +104,14 @@ const CommentSection = ({ isOpen, comments, setComments }) => {
 
     try {
       setLoading(true);
-      const data = await createComment(comment);
-      setComments((prev) => [data, ...prev]);
+      const data = await createComment(comment, selectLecture);
 
       toast.success("Comment added successfully!");
 
-      const commentdata = await getAllComments();
+      const commentdata = await getCommentsByLecture(selectLecture);
       setComments(commentdata);
+
+      
       commentRef.current?.scrollTo({
         top: 0,
         behavior: "smooth",
@@ -102,26 +129,10 @@ const CommentSection = ({ isOpen, comments, setComments }) => {
 
     try {
       setReplyLoading(true);
-      const replyData = {
-        commentId,
-        repliedText: replyText,
-      };
 
-      const data = await addReply(replyData);
-
-      // Update the comment with the new reply
-      setComments((prev) =>
-        prev.map((comment) => {
-          if (comment._id === commentId) {
-            return {
-              ...comment,
-              replies: [...(comment.replies || []), data],
-              updatedAt: new Date().toISOString(),
-            };
-          }
-          return comment;
-        }),
-      );
+      const reply = await addReply(commentId, replyText);
+      const commentsData = await getCommentsByLecture(selectLecture);
+      setComments(commentsData);
 
       setReplyText("");
       setReplyingTo(null);
@@ -139,218 +150,9 @@ const CommentSection = ({ isOpen, comments, setComments }) => {
     }));
   };
 
-  const CommentItem = ({ comment, isReply = false }) => {
-    const hasReplies = comment.replies && comment.replies.length > 0;
-    const showReplies = activeReplies[comment._id];
-    const isReplying = replyingTo === comment._id;
-
-    return (
-      <div className={` ${isReply ? "ml-8 mt-3" : ""}`}>
-        {/* Comment Card */}
-        <div
-          className={`${isReply ? "bg-gray-50" : "bg-white"} rounded-lg p-4 border border-gray-200 `}
-        >
-          <div className="flex items-start space-x-3">
-            {/* User Avatar */}
-            <img
-              src={
-                comment.user?.profilePicture ||
-                "https://via.placeholder.com/32x32"
-              }
-              alt={comment.user?.name || "User"}
-              className={`${isReply ? "h-8 w-8" : "h-10 w-10"} rounded-full border border-gray-300 object-cover shrink-0`}
-            />
-
-            <div className="flex-1 min-w-0">
-              {/* User Info and Time */}
-              <div className="flex items-baseline space-x-2">
-                <p className="text-sm font-semibold text-gray-900">
-                  {comment.user?.name || "User"}
-                </p>
-                <span className="text-xs text-gray-500">
-                  {timeAgo(comment.createdAt)}
-                </span>
-                {isReply && (
-                  <span className="text-xs text-blue-600 font-medium">
-                    ↶ Replied
-                  </span>
-                )}
-              </div>
-
-              {/* Comment Text */}
-              <p className="text-sm text-gray-800 mt-1 whitespace-pre-wrap">
-                {comment.userInput || comment.repliedText}
-              </p>
-
-              {/* Actions */}
-              <div className="flex items-center space-x-4 mt-2 pt-2 border-t border-gray-100">
-                {!isReply && (
-                  <button
-                    onClick={() => {
-                      setReplyingTo(isReplying ? null : comment._id);
-                      setReplyText("");
-                    }}
-                    className="text-xs text-blue-600 hover:text-blue-800 font-medium flex items-center space-x-1"
-                  >
-                    <svg
-                      className="w-4 h-4"
-                      fill="none"
-                      stroke="currentColor"
-                      viewBox="0 0 24 24"
-                    >
-                      <path
-                        strokeLinecap="round"
-                        strokeLinejoin="round"
-                        strokeWidth={2}
-                        d="M3 10h10a8 8 0 018 8v2M3 10l6 6m-6-6l6-6"
-                      />
-                    </svg>
-                    <span>Reply</span>
-                  </button>
-                )}
-
-                {/* Show/Hide Replies Button */}
-                {hasReplies && !isReply && (
-                  <button
-                    onClick={() => toggleReplies(comment._id)}
-                    className="text-xs text-gray-600 hover:text-gray-800 font-medium flex items-center space-x-1"
-                  >
-                    <svg
-                      className={`w-4 h-4 transform transition-transform ${showReplies ? "rotate-180" : ""}`}
-                      fill="none"
-                      stroke="currentColor"
-                      viewBox="0 0 24 24"
-                    >
-                      <path
-                        strokeLinecap="round"
-                        strokeLinejoin="round"
-                        strokeWidth={2}
-                        d="M19 9l-7 7-7-7"
-                      />
-                    </svg>
-                    <span>
-                      {comment.replies.length}{" "}
-                      {comment.replies.length === 1 ? "reply" : "replies"}
-                    </span>
-                  </button>
-                )}
-              </div>
-
-              {/* Reply Input */}
-              {isReplying && (
-                <div className="mt-4 border-l-2 border-blue-200 pl-4">
-                  <div className="flex items-end gap-2">
-                    <div className="flex-1">
-                      <textarea
-                        value={replyText}
-                        onChange={(e) => setReplyText(e.target.value)}
-                        placeholder={`Reply to ${comment.user?.name || "this comment"}...`}
-                        rows={2}
-                        className="input-ltr w-full resize-none rounded-lg border border-gray-300 px-3 py-2 text-sm
-             focus:border-blue-500 focus:outline-none focus:ring-2 focus:ring-blue-200
-             text-left"
-                        style={{
-                          direction: "ltr",
-                          unicodeBidi: "plaintext",
-                        }}
-                        autoFocus
-                      />
-                    </div>
-                    <div className="flex items-center gap-2">
-                      <button
-                        onClick={() => setReplyingTo(null)}
-                        className="px-3 py-2 text-sm text-gray-600 hover:text-gray-800 font-medium"
-                      >
-                        Cancel
-                      </button>
-                      <button
-                        onClick={() => handleReplySubmit(comment._id)}
-                        disabled={replyLoading || !replyText.trim()}
-                        className={`px-4 py-2 text-sm font-medium text-white rounded-lg transition-colors ${
-                          replyLoading || !replyText.trim()
-                            ? "bg-blue-400 cursor-not-allowed"
-                            : "bg-blue-600 hover:bg-blue-700"
-                        }`}
-                      >
-                        {replyLoading ? "Posting..." : "Reply"}
-                      </button>
-                    </div>
-                  </div>
-                </div>
-              )}
-            </div>
-
-            <div>
-              <div className="relative inline-block">
-                <BsThreeDotsVertical
-                  className="cursor-pointer"
-                  onClick={() =>
-                    setOpenMenuId(
-                      openMenuId === comment._id ? null : comment._id,
-                    )
-                  }
-                />
-
-                {openMenuId === comment._id && (
-                  <div
-                    ref={menuRef}
-                    className="absolute right-0 mt-2 w-32 bg-white border border-gray-200 rounded-lg shadow-lg overflow-hidden z-10"
-                  >
-                    {comment.user?._id === user._id ? (
-                      <div>
-                        <button
-                          className="block w-full px-3 py-1.5 text-sm text-gray-700 text-left hover:bg-gray-50 transition-colors duration-150"
-                          onClick={() => {
-                            handleDeleteComment(comment);
-                            setOpenMenuId(null);
-                          }}
-                        >
-                          Delete
-                        </button>
-
-                        <button
-                          className="block w-full px-3 py-1.5 text-sm text-gray-700 text-left hover:bg-gray-50 transition-colors duration-150"
-                          onClick={() => {
-                            setOpenMenuId(null);
-                          }}
-                        >
-                          Report
-                        </button>
-                      </div>
-                    ) : (
-                      <button
-                        className="block w-full px-3 py-1.5 text-sm text-gray-700 text-left hover:bg-gray-50 transition-colors duration-150"
-                        onClick={() => {
-                          setOpenMenuId(null);
-                        }}
-                      >
-                        Report
-                      </button>
-                    )}
-                  </div>
-                )}
-              </div>
-            </div>
-          </div>
-        </div>
-
-        {/* Render Replies */}
-        {hasReplies && showReplies && !isReply && (
-          <div className="mt-3">
-            {comment.replies.map((reply) => (
-              <CommentItem key={reply._id} comment={reply} isReply={true} />
-            ))}
-          </div>
-        )}
-      </div>
-    );
-  };
-
   return (
-    <div className="flex flex-col h-full bg-gray-50">
-      {/* Comments Count Header - Merged with user info on mobile */}
+    <div className="flex flex-col h-full bg-gray-50" dir="ltr">
       <div className="top-0 z-10 bg-white border-b border-gray-200">
-        {/* User info for mobile (above input) */}
         <div className="sm:hidden flex items-center space-x-3 py-2">
           <div className="relative">
             <img
@@ -399,7 +201,7 @@ const CommentSection = ({ isOpen, comments, setComments }) => {
         )}
       </div>
 
-      <div ref={commentRef} className="flex-1 overflow-y-auto ">
+      <div ref={commentRef} className="flex-1 overflow-y-auto">
         <div className="p-3 sm:p-4 space-y-3 sm:space-y-4">
           {comments?.length === 0 ? (
             <div className="text-center py-8 sm:py-12">
@@ -413,16 +215,34 @@ const CommentSection = ({ isOpen, comments, setComments }) => {
             </div>
           ) : (
             comments?.map((commentItem) => (
-              <CommentItem key={commentItem._id} comment={commentItem} />
+              <CommentItem
+                key={commentItem._id}
+                comment={commentItem}
+                replyingTo={replyingTo}
+                replyText={replyText}
+                setReplyText={setReplyText}
+                handleReplySubmit={handleReplySubmit}
+                replyLoading={replyLoading}
+                setReplyingTo={setReplyingTo}
+                activeReplies={activeReplies}
+                toggleReplies={toggleReplies}
+                user={user}
+                handleDeleteComment={handleDeleteComment}
+                handleDeleteReply={handleDeleteReply}
+                openMenuId={openMenuId}
+                setOpenMenuId={setOpenMenuId}
+                menuRef={menuRef}
+                timeAgo={timeAgo}
+              />
             ))
           )}
         </div>
       </div>
 
-      {/* Bottom Comment Input - Fully Responsive */}
+      {/* ... your existing bottom textarea JSX ... */}
+
       <div className="sticky bottom-0 left-0 right-0 border-gray-200 bg-white pb-3 sm:p-3">
         <div className="relative">
-          {/* Reply Indicator for mobile */}
           {replyingTo && window.innerWidth < 640 && (
             <div className="mb-2 flex items-center text-xs text-blue-600 bg-blue-50 px-3 py-1 rounded-lg">
               <svg
@@ -447,17 +267,39 @@ const CommentSection = ({ isOpen, comments, setComments }) => {
           )}
 
           <div className="flex flex-row xs:flex-row xs:items-end gap-2">
-            <textarea
-              value={comment}
-              onChange={(e) => setComment(e.target.value)}
-              placeholder={
-                replyingTo ? "Add to your reply..." : "What are your thoughts?"
-              }
-              rows={
-                window.innerWidth < 475 ? 2 : window.innerWidth < 768 ? 2 : 3
-              }
-              className="flex-1 resize-none rounded-lg sm:rounded-xl border border-gray-300 px-3 sm:px-4 h-fit shrink-0 pt-2 text-xs sm:text-sm focus:border-blue-500 focus:outline-none focus:ring-1 sm:focus:ring-2 focus:ring-blue-200"
-            />
+            <div className="flex-1 relative" dir="ltr">
+              <textarea
+                value={comment}
+                onChange={(e) => setComment(e.target.value)}
+                placeholder={
+                  replyingTo
+                    ? "Add to your reply..."
+                    : "What are your thoughts?"
+                }
+                rows={
+                  window.innerWidth < 475 ? 2 : window.innerWidth < 768 ? 2 : 3
+                }
+                className="w-full resize-none rounded-lg sm:rounded-xl border border-gray-300 px-3 sm:px-4 h-fit shrink-0 pt-2 text-xs sm:text-sm focus:border-blue-500 focus:outline-none focus:ring-1 sm:focus:ring-2 focus:ring-blue-200"
+                style={{
+                  direction: "ltr",
+                  textAlign: "left",
+                  unicodeBidi: "isolate",
+                }}
+                dir="ltr"
+                lang="en"
+                onFocus={(e) => {
+                  // Force LTR on focus
+                  e.target.style.direction = "ltr";
+                  e.target.style.textAlign = "left";
+                }}
+                onKeyDown={(e) => {
+                  if (e.key === "Enter" && !e.shiftKey) {
+                    e.preventDefault();
+                    handleSubmit();
+                  }
+                }}
+              />
+            </div>
             <div className="flex items-center justify-between xs:justify-end gap-2">
               <button
                 onClick={handleSubmit}

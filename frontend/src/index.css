@@ -298,8 +298,14 @@
   background-color: #fefde5 !important;
 }
 
-.input-ltr {
-  direction: ltr;
-  unicode-bidi: plaintext;
-  text-align: left;
+/* Force LTR for all textareas in the app */
+textarea, input[type="text"] {
+  direction: ltr !important;
+  text-align: left !important;
+  unicode-bidi: isolate !important;
+}
+
+/* Fix for Home/End keys in RTL context */
+textarea[ltr], textarea[dir="ltr"] {
+  unicode-bidi: plaintext !important;
 }

@@ -1,9 +1,9 @@
 import axios from "axios";
 
-export const createComment = async (userInput) => {
+export const createComment = async (userInput,lectureId) => {
   try {
     const res = await axios.post(
-      `${import.meta.env.VITE_BACKEND_URL}/api/comments/createComment`,
+      `${import.meta.env.VITE_BACKEND_URL}/api/comments/createComment/${lectureId}`,
       { userInput },
       {
         headers: {
@@ -60,10 +60,31 @@ export const getAllComments = async () => {
 };
 
 
-export const addReply = async (commentId) => {
+export const addReply = async (commentId, repliedText) => {
   try {
     const res = await axios.post(
       `${import.meta.env.VITE_BACKEND_URL}/api/comments/addReply/${commentId}`,
+      {repliedText},
+      {
+         headers: {
+          Authorization: `Bearer ${localStorage.getItem("token")}`,
+          "Content-Type": "application/json",
+        },
+      }
+    );
+
+    // console.log(res.data)
+    return res.data;
+  } catch (error) {
+    console.error(error);
+    throw error;
+  }
+};
+
+export const deleteReply = async (commentId, replyId) => {
+  try {
+    const res = await axios.delete(
+      `${import.meta.env.VITE_BACKEND_URL}/api/comments/${commentId}/deleteReply/${replyId}`,
       {
          headers: {
           Authorization: `Bearer ${localStorage.getItem("token")}`,
@@ -80,5 +101,23 @@ export const addReply = async (commentId) => {
   }
 };
 
+export const getCommentsByLecture = async (lectureId) => {
+  try {
+    const res = await axios.get(
+      `${import.meta.env.VITE_BACKEND_URL}/api/comments/${lectureId}/getCommentsByLecture`,
+      {
+         headers: {
+          Authorization: `Bearer ${localStorage.getItem("token")}`,
+          "Content-Type": "application/json",
+        },
+      }
+    );
+
+    return res.data;
+  } catch (error) {
+    console.error(error);
+    throw error;
+  }
+};
 
 

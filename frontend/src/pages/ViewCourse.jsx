@@ -3,8 +3,6 @@ import { Link, useParams } from "react-router-dom";
 import courseBG from "/courcebg.png";
 import { GiWhiteBook } from "react-icons/gi";
 import { MdCameraRoll } from "react-icons/md";
-import { FaComments } from "react-icons/fa6";
-import { IoMdTime } from "react-icons/io";  
 import { useDispatch, useSelector } from "react-redux";
 import { useEffect, useRef, useState } from "react";
 import { closeLectureModal, openLectureModal } from "../redux/slices/uiSlice";
@@ -32,6 +30,7 @@ const ViewCourse = () => {
   const [loading, setLoading] = useState(false);
   const [completedLectures, setCompletedLectures] = useState({});
   const [comments, setComments] = useState([]);
+  const [selectLecture, setSelectLecture] = useState(null);
 
   const allCourses = useSelector((store) => store.course.courses);
   const course = allCourses?.find((c) => c._id === paramId);
@@ -320,7 +319,10 @@ const ViewCourse = () => {
                         {index + 1}
                       </span>
                       <span
-                        onClick={() => openModal(lecture)}
+                        onClick={() => {
+                          openModal(lecture)
+                          setSelectLecture(lecture._id)
+                        }}
                         className="cursor-pointer hover:text-blue-600 hover:underline font-medium"
                       >
                         {lecture.lectureTitle}
@@ -510,6 +512,7 @@ const ViewCourse = () => {
                     isOpen={isOpen}
                     comments={comments}
                     setComments={setComments}
+                    selectLecture={selectLecture}
                   />
                 </div>
               </div>

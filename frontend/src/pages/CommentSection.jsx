@@ -39,7 +39,7 @@ const CommentSection = ({ isOpen, comments, setComments, selectLecture }) => {
     };
 
     fetchComments();
-  }, [isOpen, selectLecture]);
+  }, [isOpen, selectLecture, setComments]);
 
   useEffect(() => {
     const handleClickOutside = (e) => {

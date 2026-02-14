@@ -1,9 +1,15 @@
 import React, { useEffect, useState } from "react";
-import { FaCcStripe, FaCheckCircle, FaTimesCircle, FaClock } from "react-icons/fa";
+import {
+  FaCcStripe,
+  FaCheckCircle,
+  FaTimesCircle,
+  FaClock,
+} from "react-icons/fa";
 import { useSelector } from "react-redux";
-import { getPayment, updatePaymentStatus } from "../api/paymentApi"; // Import both functions
-import { Loader2, RefreshCw, CheckCircle, XCircle } from "lucide-react";
-import CheckoutForm from "../components/CheckoutForm";
+import { getPayment, updatePaymentStatus } from "../api/paymentApi";
+import { Loader2, RefreshCw } from "lucide-react";
+import { CheckoutForm } from "../components/CheckoutForm";
+import { toast } from "sonner"; // IMPORTANT: Add this import
 
 const AccountBook = () => {
   const { user } = useSelector((store) => store.user);
@@ -18,38 +24,26 @@ const AccountBook = () => {
   const fetchPayments = async () => {
     try {
       setLoading(true);
-      const response = await getPayment(); // Use your updated API function
-      
+      const response = await getPayment();
+
       if (response.success) {
-        // Use the transactions array from response (or fallback to getPayment for compatibility)
-        const fetchedTransactions = response.transactions || response.getPayment || [];
+        const fetchedTransactions =
+          response.transactions || response.getPayment || [];
         setTransactions(fetchedTransactions);
-        
-        // Set summary if available
+
         if (response.summary) {
           setSummary(response.summary);
         }
-        
+
         console.log("Fetched transactions:", fetchedTransactions);
-        console.log("Summary:", response.summary);
-        
-        // Example: Log each transaction's status
-        fetchedTransactions.forEach(transaction => {
-          console.log(`Transaction ${transaction.challanNo}:`, {
-            status: transaction.paymentStatus,
-            displayText: transaction.statusDisplay?.text || "Pending",
-            isPaid: transaction.isPaid || false
-          });
-        });
       } else {
         console.error("Failed to fetch payments:", response.message);
-        // Set empty arrays to prevent errors
         setTransactions([]);
         setSummary({
           totalTransactions: 0,
           totalAmount: 0,
           paidAmount: 0,
-          pendingAmount: 0
+          pendingAmount: 0,
         });
       }
     } catch (error) {
@@ -59,7 +53,7 @@ const AccountBook = () => {
         totalTransactions: 0,
         totalAmount: 0,
         paidAmount: 0,
-        pendingAmount: 0
+        pendingAmount: 0,
       });
     } finally {
       setLoading(false);
@@ -73,18 +67,25 @@ const AccountBook = () => {
     setRefreshing(false);
   };
 
+  const formatPKR = (amount) => {
+    return new Intl.NumberFormat("ur-PK", {
+      style: "currency",
+      currency: "PKR",
+      minimumFractionDigits: 0,
+      maximumFractionDigits: 2,
+    }).format(amount);
+  };
+
   useEffect(() => {
     fetchPayments();
   }, []);
 
   // Helper function to get status icon and styling
   const getStatusDisplay = (transaction) => {
-    // Use the backend statusDisplay if available, otherwise calculate locally
     if (transaction.statusDisplay) {
       return transaction.statusDisplay;
     }
-    
-    // Fallback local calculation
+
     const status = transaction.paymentStatus || "pending";
     switch (status) {
       case "succeeded":
@@ -93,7 +94,8 @@ const AccountBook = () => {
           color: "#10b981",
           bgColor: "bg-green-100",
           textColor: "text-green-800",
-          icon: <FaCheckCircle className="h-5 w-5 text-green-600" />
+          icon: <FaCheckCircle className="h-5 w-5 text-green-600" />,
+          isActionable: false,
         };
       case "failed":
         return {
@@ -101,7 +103,8 @@ const AccountBook = () => {
           color: "#ef4444",
           bgColor: "bg-red-100",
           textColor: "text-red-800",
-          icon: <FaTimesCircle className="h-5 w-5 text-red-600" />
+          icon: <FaTimesCircle className="h-5 w-5 text-red-600" />,
+          isActionable: true,
         };
       case "processing":
         return {
@@ -109,7 +112,8 @@ const AccountBook = () => {
           color: "#3b82f6",
           bgColor: "bg-blue-100",
           textColor: "text-blue-800",
-          icon: <RefreshCw className="h-4 w-4 animate-spin text-blue-600" />
+          icon: <RefreshCw className="h-4 w-4 animate-spin text-blue-600" />,
+          isActionable: false,
         };
       default:
         return {
@@ -118,7 +122,7 @@ const AccountBook = () => {
           bgColor: "bg-amber-100",
           textColor: "text-amber-800",
           icon: <FaClock className="h-5 w-5 text-amber-600" />,
-          isActionable: true // Mark as clickable for payment
+          isActionable: true,
         };
     }
   };
@@ -139,31 +143,43 @@ const AccountBook = () => {
           Updating payments...
         </div>
       )}
-      
+
       <h1 className="text-2xl flex md:block items-center justify-center text-gray-800 mb-6">
         My Account Book
       </h1>
 
-      {/* Summary Statistics Card - Only show if summary exists */}
+      {/* Summary Statistics Card */}
       {summary && (
         <div className="bg-white rounded-lg shadow-md p-6 mb-8 grid grid-cols-1 md:grid-cols-4 gap-4">
           <div className="text-center p-4 bg-blue-50 rounded-lg">
             <p className="text-sm text-gray-600 mb-1">Total Transactions</p>
-            <p className="text-2xl font-bold text-blue-700">{summary.totalTransactions}</p>
+            <p className="text-2xl font-bold text-blue-700">
+              {summary.totalTransactions}
+            </p>
           </div>
           <div className="text-center p-4 bg-green-50 rounded-lg">
             <p className="text-sm text-gray-600 mb-1">Total Amount</p>
-            <p className="text-2xl font-bold text-green-700">Rs. {summary.totalAmount}</p>
+            <p className="text-2xl font-bold text-green-700">
+              Rs. {summary.totalAmount}
+            </p>
           </div>
           <div className="text-center p-4 bg-purple-50 rounded-lg">
             <p className="text-sm text-gray-600 mb-1">Paid Amount</p>
-            <p className="text-2xl font-bold text-purple-700">Rs. {summary.paidAmount}</p>
-            <p className="text-xs text-gray-500">{summary.paidCount} transactions</p>
+            <p className="text-2xl font-bold text-purple-700">
+              Rs. {summary.paidAmount}
+            </p>
+            <p className="text-xs text-gray-500">
+              {summary.paidCount} transactions
+            </p>
           </div>
           <div className="text-center p-4 bg-amber-50 rounded-lg">
             <p className="text-sm text-gray-600 mb-1">Pending Amount</p>
-            <p className="text-2xl font-bold text-amber-700">Rs. {summary.pendingAmount}</p>
-            <p className="text-xs text-gray-500">{summary.pendingCount} pending</p>
+            <p className="text-2xl font-bold text-amber-700">
+              Rs. {summary.pendingAmount}
+            </p>
+            <p className="text-xs text-gray-500">
+              {summary.pendingCount} pending
+            </p>
           </div>
         </div>
       )}
@@ -180,29 +196,42 @@ const AccountBook = () => {
           {summary && (
             <div className="pt-4 border-t">
               <span className="font-semibold">Payment Summary:</span>{" "}
-              {summary.paidCount} paid, {summary.pendingCount} pending, {summary.failedCount || 0} failed
+              {summary.paidCount} paid, {summary.pendingCount} pending,{" "}
+              {summary.failedCount || 0} failed
             </div>
           )}
         </div>
       </div>
 
-      {/* md or above screens - Transactions Table */}
+      {/* Desktop Table View */}
       <div className="bg-white rounded-lg shadow-md overflow-x-auto hidden md:block">
         <table className="min-w-full table-auto text-sm text-left shadow">
           <thead className="bg-[#716ACA] text-white tracking-wider border-b">
             <tr>
-              <th className="px-4 py-3 border border-gray-300 text-center">Challan No</th>
-              <th className="px-4 py-3 border border-gray-300 text-center">Description</th>
-              <th className="px-4 py-3 border border-gray-300 text-center">Amount (Rs.)</th>
-              <th className="px-4 py-3 border border-gray-300 text-center">Due Date</th>
-              <th className="px-4 py-3 border border-gray-300 text-center">Payment Method</th>
-              <th className="px-4 py-3 border border-gray-300 text-center">Status</th>
+              <th className="px-4 py-3 border border-gray-300 text-center">
+                Challan No
+              </th>
+              <th className="px-4 py-3 border border-gray-300 text-center">
+                Description
+              </th>
+              <th className="px-4 py-3 border border-gray-300 text-center">
+                Amount (Rs.)
+              </th>
+              <th className="px-4 py-3 border border-gray-300 text-center">
+                Due Date
+              </th>
+              <th className="px-4 py-3 border border-gray-300 text-center">
+                Payment Method
+              </th>
+              <th className="px-4 py-3 border border-gray-300 text-center">
+                Status
+              </th>
             </tr>
           </thead>
           <tbody className="divide-y">
             {transactions?.map((item, idx) => {
               const status = getStatusDisplay(item);
-              
+
               return (
                 <tr key={idx} className="hover:bg-gray-50">
                   <td className="px-4 py-3 border border-gray-300 text-center">
@@ -212,10 +241,12 @@ const AccountBook = () => {
                     {item.description || "Payment"}
                   </td>
                   <td className="px-4 py-3 border border-gray-300 text-center">
-                    Rs. {item.ammount || 0}
+                    Rs. {formatPKR(item.ammount) || 0}
                   </td>
                   <td className="px-4 py-3 border border-gray-300 text-center text-green-700">
-                    {item.dueDate ? new Date(item.dueDate).toLocaleDateString() : "-"}
+                    {item.dueDate
+                      ? new Date(item.dueDate).toLocaleDateString()
+                      : "-"}
                   </td>
                   <td className="px-4 py-3 border border-gray-300 text-center font-semibold">
                     {item.paymentMethod || "Stripe"}
@@ -233,7 +264,9 @@ const AccountBook = () => {
                         <span className="font-medium">Pay Now</span>
                       </button>
                     ) : (
-                      <div className={`flex items-center justify-center gap-2 px-4 py-2 rounded-lg ${status.bgColor} ${status.textColor} border`}>
+                      <div
+                        className={`flex items-center justify-center gap-2 px-4 py-2 rounded-lg ${status.bgColor} ${status.textColor} border`}
+                      >
                         {status.icon}
                         <span className="font-medium">{status.text}</span>
                       </div>
@@ -242,7 +275,7 @@ const AccountBook = () => {
                 </tr>
               );
             })}
-            
+
             {/* Empty state */}
             {transactions.length === 0 && !loading && (
               <tr>
@@ -255,20 +288,25 @@ const AccountBook = () => {
         </table>
       </div>
 
-      {/* small screens only - Mobile Cards */}
+      {/* Mobile Card View */}
       <div className="block md:hidden space-y-4">
         {transactions?.map((item, idx) => {
           const status = getStatusDisplay(item);
-          
+
           return (
-            <div key={idx} className="bg-white border border-gray-200 rounded-lg p-4 shadow-md space-y-2">
+            <div
+              key={idx}
+              className="bg-white border border-gray-200 rounded-lg p-4 shadow-md space-y-2"
+            >
               <div className="flex justify-between text-sm">
                 <span className="font-medium text-gray-600">Challan No:</span>
                 <span>{item.challanNo || `CH${idx + 1000}`}</span>
               </div>
               <div className="flex justify-between text-sm">
                 <span className="font-medium text-gray-600">Description:</span>
-                <span className="text-right">{item.description || "Payment"}</span>
+                <span className="text-right">
+                  {item.description || "Payment"}
+                </span>
               </div>
               <div className="flex justify-between text-sm">
                 <span className="font-medium text-gray-600">Amount (Rs.):</span>
@@ -276,11 +314,19 @@ const AccountBook = () => {
               </div>
               <div className="flex justify-between text-sm text-green-700">
                 <span className="font-medium text-gray-600">Due Date:</span>
-                <span>{item.dueDate ? new Date(item.dueDate).toLocaleDateString() : "-"}</span>
+                <span>
+                  {item.dueDate
+                    ? new Date(item.dueDate).toLocaleDateString()
+                    : "-"}
+                </span>
               </div>
               <div className="flex justify-between text-sm">
-                <span className="font-medium text-gray-600">Payment Method:</span>
-                <span className="font-semibold">{item.paymentMethod || "Stripe"}</span>
+                <span className="font-medium text-gray-600">
+                  Payment Method:
+                </span>
+                <span className="font-semibold">
+                  {item.paymentMethod || "Stripe"}
+                </span>
               </div>
               <div className="flex justify-between items-center text-sm pt-2 border-t">
                 <span className="font-medium text-gray-600">Status:</span>
@@ -296,7 +342,9 @@ const AccountBook = () => {
                     <span className="font-medium">Pay Now</span>
                   </button>
                 ) : (
-                  <div className={`flex items-center gap-2 px-3 py-1.5 rounded-lg ${status.bgColor} ${status.textColor} border`}>
+                  <div
+                    className={`flex items-center gap-2 px-3 py-1.5 rounded-lg ${status.bgColor} ${status.textColor} border`}
+                  >
                     {status.icon}
                     <span className="font-medium">{status.text}</span>
                   </div>
@@ -305,12 +353,14 @@ const AccountBook = () => {
             </div>
           );
         })}
-        
+
         {/* Empty state for mobile */}
         {transactions.length === 0 && !loading && (
           <div className="bg-white border border-gray-200 rounded-lg p-8 text-center">
             <p className="text-gray-500 mb-2">No transactions found</p>
-            <p className="text-sm text-gray-400">Your payments will appear here once available.</p>
+            <p className="text-sm text-gray-400">
+              Your payments will appear here once available.
+            </p>
           </div>
         )}
       </div>
@@ -322,7 +372,6 @@ const AccountBook = () => {
           onClose={() => {
             setOpen(false);
             setSelectedTransaction(null);
-            // Refresh payments after modal closes
             refreshPayments();
           }}
           onPaymentSuccess={refreshPayments}
@@ -334,13 +383,12 @@ const AccountBook = () => {
 
 export default AccountBook;
 
-// Updated PaymentModal with onPaymentSuccess callback
+// Payment Modal Component
 const PaymentModal = ({ onClose, transaction, onPaymentSuccess }) => {
   const [paymentCompleted, setPaymentCompleted] = useState(false);
 
   const handlePaymentSuccess = () => {
     setPaymentCompleted(true);
-    // Call the success callback after a delay
     setTimeout(() => {
       onClose();
       if (onPaymentSuccess) onPaymentSuccess();
@@ -362,20 +410,21 @@ const PaymentModal = ({ onClose, transaction, onPaymentSuccess }) => {
         </h2>
 
         {paymentCompleted ? (
-          <div className="text-center py-8">
+          <div className="text-center py-4">
             <FaCheckCircle className="h-16 w-16 text-green-500 mx-auto mb-4" />
-            <p className="text-lg font-medium text-gray-800 mb-2">
+            <p className="text-lg font-semibold text-gray-800 mb-2">
               Payment Successful!
             </p>
             <p className="text-gray-600">
-              Your payment of <strong>Rs. {transaction?.ammount}</strong> for challan{" "}
-              <strong>{transaction?.challanNo}</strong> has been processed successfully.
+              Your payment of{" "}
+              <span className="font-bold">
+                {new Intl.NumberFormat("ur-PK", {
+                  style: "currency",
+                  currency: "PKR",
+                }).format(transaction?.ammount)}
+              </span>{" "}
+              has been processed.
             </p>
-            <div className="mt-6 p-4 bg-green-50 rounded-lg border border-green-200">
-              <p className="text-sm text-green-700">
-                ✅ The transaction status will be updated automatically.
-              </p>
-            </div>
           </div>
         ) : (
           <>
@@ -391,8 +440,8 @@ const PaymentModal = ({ onClose, transaction, onPaymentSuccess }) => {
               </p>
             </div>
 
-            <CheckoutForm 
-              amount={transaction?.ammount} 
+            <CheckoutForm
+              amount={transaction?.ammount}
               transactionId={transaction?._id || transaction?.challanNo}
               onSuccess={handlePaymentSuccess}
             />

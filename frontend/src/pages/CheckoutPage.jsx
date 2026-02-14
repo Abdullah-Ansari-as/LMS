@@ -7,7 +7,7 @@ const CheckoutPage = () => {
   const [clientSecret, setClientSecret] = useState("");
 
   useEffect(() => {
-    fetch("http://localhost:3000/api/payments/createPaymentIntent", {
+    fetch("https://lms-5cbc.vercel.app/api/payments/createPaymentIntent", {
       method: "POST",
       headers: { "Content-Type": "application/json" },
       body: JSON.stringify({ amount: 2000 }),

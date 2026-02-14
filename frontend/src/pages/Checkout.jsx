@@ -16,7 +16,7 @@ const Checkout = () => {
     await stripe.confirmPayment({
       elements,
       confirmParams: {
-        return_url: "http://localhost:3000/success",
+        return_url: "https://lms-5cbc.vercel.app/success",
       },
     });
   };

@@ -16,7 +16,7 @@ const commentRoute = require("./routes/comment-routes.js")
 
 
 const app = express(); 
-
+app.use(cors());
 app.use(
   cors({
     origin: [

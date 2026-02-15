@@ -15,7 +15,31 @@ const geminiRoute = require("./routes/geminiRoute.js");
 const commentRoute = require("./routes/comment-routes.js") 
 
 
-const app = express();  
+const app = express(); 
+
+app.use(
+  cors({
+    origin: [
+      "http://localhost:5175",
+      "https://lms-abd.vercel.app"
+    ],
+    methods: ["GET", "POST", "PUT", "DELETE", "OPTIONS"],
+    allowedHeaders: ["Content-Type", "Authorization"],
+    credentials: true
+  })
+);
+
+app.use(
+  cors({
+    origin: [
+      "http://localhost:5175",
+      "https://lms-abd.vercel.app"
+    ],
+    methods: ["GET", "POST", "PUT", "DELETE", "OPTIONS"],
+    allowedHeaders: ["Content-Type", "Authorization"],
+    credentials: true
+  })
+);
 
 app.use(express.static("public"));
 app.use(express.json({ limit: "10mb" })); // must allow big body size

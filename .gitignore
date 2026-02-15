@@ -9,3 +9,4 @@ backend/node_modules/
 # Env Variables
 frontend/.env
 backend/.env
+.

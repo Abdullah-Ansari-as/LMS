@@ -1,6 +1,6 @@
 import axios from 'axios';
 
-const API_URL = 'https://lms-5cbc.vercel.app/api';
+const API_URL = 'https://lms-nine-coral.vercel.app';
 
 const getAuthHeaders = () => {
   const token = localStorage.getItem('token');

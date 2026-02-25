@@ -1,6 +1,6 @@
 import axios from 'axios';
 
-const API_URL = 'https://lms-nine-coral.vercel.app';
+const API_URL = `${import.meta.env.VITE_BACKEND_URL}`;
 
 const getAuthHeaders = () => {
   const token = localStorage.getItem('token');

@@ -21,12 +21,15 @@ const app = express();
 
 app.use(
   cors({
-    origin: "*",
-    credentials: true,
+    origin: [
+      "http://localhost:5173",
+      "https://lms-neon-one.vercel.app",
+      "https://lms-abd.vercel.app",
+    ],
     methods: ["GET", "POST", "PUT", "DELETE", "OPTIONS"],
     allowedHeaders: ["Content-Type", "Authorization"],
   })
-); 
+);
 
 /* ✅ Middleware */
 app.use(express.json({ limit: "10mb" }));

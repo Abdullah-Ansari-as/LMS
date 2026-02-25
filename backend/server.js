@@ -19,18 +19,19 @@ const commentRoute = require("./routes/comment-routes.js");
 
 const app = express();
 
-/* ✅ CORS — ONLY ONCE */
 app.use(
   cors({
     origin: [
-      "http://localhost:5173", 
+      "http://localhost:5173",
       "https://lms-nine-coral.vercel.app",
-      "https://lms-abd.vercel.app"
+      "https://lms-abd.vercel.app",
     ],
+    credentials: true,
     methods: ["GET", "POST", "PUT", "DELETE", "OPTIONS"],
     allowedHeaders: ["Content-Type", "Authorization"],
   })
 );
+app.options("*", cors());
 
 /* ✅ Middleware */
 app.use(express.json({ limit: "10mb" }));

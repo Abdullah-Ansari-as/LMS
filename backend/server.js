@@ -21,11 +21,7 @@ const app = express();
 
 app.use(
   cors({
-    origin: [
-      "http://localhost:5173",
-      "https://lms-neon-one.vercel.app",
-      "https://lms-abd.vercel.app",
-    ],
+    origin:  "*",
     methods: ["GET", "POST", "PUT", "DELETE", "OPTIONS"]
   })
 );

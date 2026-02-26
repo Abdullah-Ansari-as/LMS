@@ -26,8 +26,7 @@ app.use(
       "https://lms-neon-one.vercel.app",
       "https://lms-abd.vercel.app",
     ],
-    methods: ["GET", "POST", "PUT", "DELETE", "OPTIONS"],
-    allowedHeaders: ["Content-Type", "Authorization"],
+    methods: ["GET", "POST", "PUT", "DELETE", "OPTIONS"]
   })
 );
 

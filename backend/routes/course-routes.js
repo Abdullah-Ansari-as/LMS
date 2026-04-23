@@ -4,6 +4,7 @@ const { protect } = require('../middlewares/auth-mid.js');
 const { newCourse, uploadLecture, getAllCourses, uploadAssignmentFormAdmin, submitAssignment, uploadQuizFromAdmin, fetchAssignmentsById, fetchQuizesById, submitQuiz, uploadAnnouncement, getAnnouncementsByCourseId, getTotalAnnouncements, fetchSubmittedAssignments, fetchSubmittedQuizes, deleteCourseLecture, fetchSingleQuiz, fetchAndCompareQuiz } = require("../controllers/course-controller.js");
 const { upload } = require("../utils/uploadAssignment.js")
 const path = require("path");
+const { uploadLectureHandout } = require("../controllers/pdf-controller.js");
 
 const router = express.Router();
 
@@ -24,12 +25,17 @@ router.get("/fetchSubmittedQuizes", protect, fetchSubmittedQuizes);
 router.delete("/deleteCourseLecture/:courseId/lectures/:lectureId", protect, deleteCourseLecture);
 router.post("/fetchSingleQuiz/:quizId", protect, fetchSingleQuiz);
 router.post("/fetchAndCompareQuiz/:quizId", protect, fetchAndCompareQuiz);
+// router.post("/course/:courseId/lecture/:lectureId/handout",protect,upload.single("file"),uploadLectureHandout);
+router.post(
+  "/course/:courseId/lecture/:lectureId/handout",
+  upload.single("file"),
+  uploadLectureHandout
+);
 
 
-router.get("/download/:filename", (req, res) => {
-	const file = path.join(__dirname, "../uploads/assignments", req.params.filename);
-	res.download(file); // Forces file download
+router.get("/download", (req, res) => {
+  const fileUrl = req.query.url;
+  res.redirect(fileUrl); // ✅ redirect to Cloudinary
 });
-
 
 module.exports = router;

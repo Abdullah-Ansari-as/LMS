@@ -16,7 +16,7 @@ const Checkout = () => {
     await stripe.confirmPayment({
       elements,
       confirmParams: {
-        return_url: "http://localhost:3000/success",
+        return_url: `${import.meta.env.VITE_BACKEND_URL}/success`,
       },
     });
   };

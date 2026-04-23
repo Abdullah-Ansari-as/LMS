@@ -14,7 +14,7 @@ const { protect } = require('../middlewares/auth-mid.js');
 
 const router = express.Router();
 
-router.post("/register", register);
+router.post("/register", register);  
 router.post("/login", login);
 router.post("/logout", logout);
 router.get("/getAllStudents", protect, isAdmin, getAllStudents);

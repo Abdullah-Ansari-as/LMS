@@ -8,7 +8,7 @@ export const getAllCourses = async () => {
         headers: {
           Authorization: `Bearer ${localStorage.getItem("token")}`,
         },
-      }
+      },
     );
     return res.data;
   } catch (error) {
@@ -29,7 +29,7 @@ export const uploadAssignmentByAdmin = async (data) => {
         headers: {
           Authorization: `Bearer ${localStorage.getItem("token")}`,
         },
-      }
+      },
     );
     return res.data;
   } catch (error) {
@@ -48,7 +48,7 @@ export const fetchAssignmentsById = async (courseId) => {
         headers: {
           Authorization: `Bearer ${localStorage.getItem("token")}`,
         },
-      }
+      },
     );
     return res.data;
   } catch (error) {
@@ -70,7 +70,7 @@ export const submitAssignment = async (file, id) => {
           Authorization: `Bearer ${localStorage.getItem("token")}`,
           "Content-Type": "multipart/form-data",
         },
-      }
+      },
     );
     return res.data;
   } catch (error) {
@@ -89,7 +89,7 @@ export const uploadQuizByAdmin = async (data) => {
         headers: {
           Authorization: `Bearer ${localStorage.getItem("token")}`,
         },
-      }
+      },
     );
     return res.data;
   } catch (error) {
@@ -108,7 +108,7 @@ export const fetchQuizesById = async (courseId) => {
         headers: {
           Authorization: `Bearer ${localStorage.getItem("token")}`,
         },
-      }
+      },
     );
     return res.data;
   } catch (error) {
@@ -126,7 +126,7 @@ export const submitQuiz = async (quizId, data) => {
         headers: {
           Authorization: `Bearer ${localStorage.getItem("token")}`,
         },
-      }
+      },
     );
     return res.data;
   } catch (error) {
@@ -144,7 +144,7 @@ export const uploadCourseAnnouncement = async (data) => {
         headers: {
           Authorization: `Bearer ${localStorage.getItem("token")}`,
         },
-      }
+      },
     );
     return res.data;
   } catch (error) {
@@ -163,7 +163,7 @@ export const getCourseAnnouncement = async (courseId) => {
         headers: {
           Authorization: `Bearer ${localStorage.getItem("token")}`,
         },
-      }
+      },
     );
     return res.data;
   } catch (error) {
@@ -182,7 +182,7 @@ export const uploadNewCourse = async (newCourseData) => {
         headers: {
           Authorization: `Bearer ${localStorage.getItem("token")}`,
         },
-      }
+      },
     );
     return res.data;
   } catch (error) {
@@ -201,7 +201,7 @@ export const uploadLecture = async (LectureData) => {
         headers: {
           Authorization: `Bearer ${localStorage.getItem("token")}`,
         },
-      }
+      },
     );
     return res.data;
   } catch (error) {
@@ -219,7 +219,7 @@ export const getTotalAnnouncements = async () => {
         headers: {
           Authorization: `Bearer ${localStorage.getItem("token")}`,
         },
-      }
+      },
     );
     return res.data;
   } catch (error) {
@@ -238,7 +238,7 @@ export const fetchSubmittedAssignments = async () => {
         headers: {
           Authorization: `Bearer ${localStorage.getItem("token")}`,
         },
-      }
+      },
     );
     return res.data;
   } catch (error) {
@@ -255,7 +255,7 @@ export const fetchSubmittedQuizes = async () => {
         headers: {
           Authorization: `Bearer ${localStorage.getItem("token")}`,
         },
-      }
+      },
     );
     return res.data;
   } catch (error) {
@@ -274,7 +274,7 @@ export const deleteCourseLecture = async (courseId, lectureId) => {
         headers: {
           Authorization: `Bearer ${localStorage.getItem("token")}`,
         },
-      }
+      },
     );
     return res.data;
   } catch (error) {
@@ -294,7 +294,7 @@ export const fetchSingleQuiz = async (quizId, data) => {
         headers: {
           Authorization: `Bearer ${localStorage.getItem("token")}`,
         },
-      }
+      },
     );
     return res.data;
   } catch (error) {
@@ -303,19 +303,43 @@ export const fetchSingleQuiz = async (quizId, data) => {
   }
 };
 
-export const fetchAndCompareQuiz = async(quizId, data)=> {
+export const fetchAndCompareQuiz = async (quizId, data) => {
   try {
-    const res = await axios.post(`${import.meta.env.VITE_BACKEND_URL}/api/courses/fetchAndCompareQuiz/${quizId}`,
+    const res = await axios.post(
+      `${import.meta.env.VITE_BACKEND_URL}/api/courses/fetchAndCompareQuiz/${quizId}`,
       data,
       {
-         headers: {
+        headers: {
           Authorization: `Bearer ${localStorage.getItem("token")}`,
         },
-      }
-    )
+      },
+    );
     return res.data;
   } catch (error) {
-     console.error(error.message);
+    console.error(error.message);
     throw error;
   }
-}
+};
+
+export const uploadLectureHandout = async (courseId, lectureId, file) => {
+  try {
+    const formData = new FormData();
+    formData.append("file", file); // 👈 must match backend (upload.single("file"))
+
+    const res = await axios.post(
+      `${import.meta.env.VITE_BACKEND_URL}/api/courses/course/${courseId}/lecture/${lectureId}/handout`,
+      formData,
+      {
+        headers: {
+          Authorization: `Bearer ${localStorage.getItem("token")}`,
+          "Content-Type": "multipart/form-data",
+        },
+      },
+    );
+
+    return res.data;
+  } catch (error) {
+    console.error(error.message);
+    throw error;
+  }
+};

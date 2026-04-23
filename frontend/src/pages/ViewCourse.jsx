@@ -12,6 +12,7 @@ import { MdDeleteOutline } from "react-icons/md";
 import { deleteCourseLecture, getAllCourses } from "../api/courseApi";
 import { setCourses } from "../redux/slices/courseSlice";
 import CommentSection from "./CommentSection";
+import { FaFileAlt } from "react-icons/fa";
 
 const ViewCourse = () => {
   const params = useParams();
@@ -35,6 +36,8 @@ const ViewCourse = () => {
   const allCourses = useSelector((store) => store.course.courses);
   const course = allCourses?.find((c) => c._id === paramId);
   const LectureData = course?.lectures || [];
+  const courseId = course._id || ""
+  console.log("coursecourse", course)
 
   const courseData = useSelector((store) => store.course.courses);
 
@@ -235,6 +238,10 @@ const ViewCourse = () => {
     }
   };
 
+  const handlePDF = (id) => {
+    if (!id && cousrse) return;
+  }
+
   return (
     <div className="min-h-screen bg-[#F2F3F8] py-8 px-2 md:px-8 mt-18">
       <div className="flex items-center">
@@ -320,8 +327,8 @@ const ViewCourse = () => {
                       </span>
                       <span
                         onClick={() => {
-                          openModal(lecture)
-                          setSelectLecture(lecture._id)
+                          openModal(lecture);
+                          setSelectLecture(lecture._id);
                         }}
                         className="cursor-pointer hover:text-blue-600 hover:underline font-medium"
                       >
@@ -347,13 +354,24 @@ const ViewCourse = () => {
                       />
                     </div>
                   </div>
-
                   <div className="flex justify-between items-center mt-3">
-                    <div className="flex gap-3">
-                      
-                      <span className="flex items-center text-xs text-gray-600">
-                        <MdCameraRoll className="mr-1 text-red-400" />
+                    <div className="flex gap-4 items-center">
+                      {/* Video */}
+                      <span
+                        onClick={() => {
+                          openModal(lecture);
+                          setSelectLecture(lecture._id);
+                        }}
+                        className="flex cursor-pointer items-center text-xs text-gray-600 bg-red-50 px-2 py-1 rounded-md"
+                      >
+                        <MdCameraRoll className="mr-1 text-red-500" />
                         Video
+                      </span>
+
+                      {/* Handouts */}
+                      <span onClick={() => handlePDF(lecture._id)} className="flex cursor-pointer items-center text-xs text-gray-600 bg-blue-50 px-2 py-1 rounded-md">
+                        <FaFileAlt className="mr-1 text-blue-500" />
+                        Handout
                       </span>
                     </div>
                   </div>
@@ -497,9 +515,8 @@ const ViewCourse = () => {
                   <div className="flex items-center justify-between">
                     <div>
                       <h3 className="text-base sm:text-lg font-bold text-gray-800">
-                       
-                          {comments?.length || 0}
-                        
+                        {comments?.length || 0}
+
                         <span className="text-base px-2">Comments</span>
                       </h3>
                     </div>

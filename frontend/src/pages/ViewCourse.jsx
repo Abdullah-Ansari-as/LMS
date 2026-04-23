@@ -36,7 +36,7 @@ const ViewCourse = () => {
   const allCourses = useSelector((store) => store.course.courses);
   const course = allCourses?.find((c) => c._id === paramId);
   const LectureData = course?.lectures || [];
-  const courseId = course._id || ""
+  const courseId = course._id || "";
   console.log("coursecourse", course)
 
   const courseData = useSelector((store) => store.course.courses);
@@ -239,7 +239,8 @@ const ViewCourse = () => {
   };
 
   const handlePDF = (id) => {
-    if (!id && cousrse) return;
+    if (!id && courseId) return;
+    const res = await uploadLectureHandout(courseId, id, )
   }
 
   return (

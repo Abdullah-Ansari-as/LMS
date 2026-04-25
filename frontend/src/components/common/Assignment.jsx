@@ -28,7 +28,8 @@ const Assignment = () => {
 	const dispatch = useDispatch();
 	const navigate = useNavigate();
 
-	const { assignments } = useSelector((store) => store.course.assignments);
+	const assignments = useSelector((store) => store.course.assignments);
+	const submittedAssignmentsFromStore = useSelector((store) => store.course.submittedAssignments);
 
 	const [loading, setLoading] = useState(false);
 	const [totalSubmittedAssignments, setTotalSubmittedAssignments] = useState([])
@@ -50,13 +51,23 @@ const Assignment = () => {
 
 	useEffect(() => {
 		const getAllSubmittedAssignments = async () => {
-			const res = await fetchSubmittedAssignments();
-			if (res.success) { 
-				setTotalSubmittedAssignments(res.submittedAssignments)
+			try {
+				const res = await fetchSubmittedAssignments();
+				if (res.success) {
+					setTotalSubmittedAssignments(res.submittedAssignments || [])
+				}
+			} catch (error) {
+				console.error(error);
 			}
 		}
 		getAllSubmittedAssignments();
 	}, [])
+
+	// If a submission just happened, store updates immediately—reflect it in UI
+	const allSubmittedAssignments = [
+		...(totalSubmittedAssignments || []),
+		...(submittedAssignmentsFromStore || []),
+	];
 
 
 	useEffect(() => {
@@ -149,7 +160,7 @@ const Assignment = () => {
 
 											<div className="font-medium text-gray-500">Submit</div>
 											<div>
-												{totalSubmittedAssignments?.some((s) => s.studentId === user._id && s.assignmentId === assignment._id) ? (
+												{allSubmittedAssignments?.some((s) => s.studentId === user._id && s.assignmentId === assignment._id) ? (
 													<span className="text-green-600 font-semibold">Submitted</span>
 												) : (
 													<GoFileSubmodule
@@ -203,7 +214,7 @@ const Assignment = () => {
 														{assignment.totalMarks.toFixed(2)}
 													</td>
 													<td className="py-3 px-4 border-r text-blue-900 border-gray-200">
-														{totalSubmittedAssignments?.some((s) => s.studentId === user._id && s.assignmentId === assignment._id) ? (
+														{allSubmittedAssignments?.some((s) => s.studentId === user._id && s.assignmentId === assignment._id) ? (
 															<span className="text-green-600 font-semibold">Submitted</span>
 														) : (
 															<GoFileSubmodule

@@ -1,7 +1,26 @@
 const express = require("express");
 const { isAdmin } = require("../middlewares/admin-mid.js");
 const { protect } = require('../middlewares/auth-mid.js');
-const { newCourse, uploadLecture, getAllCourses, uploadAssignmentFormAdmin, submitAssignment, uploadQuizFromAdmin, fetchAssignmentsById, fetchQuizesById, submitQuiz, uploadAnnouncement, getAnnouncementsByCourseId, getTotalAnnouncements, fetchSubmittedAssignments, fetchSubmittedQuizes, deleteCourseLecture, fetchSingleQuiz, fetchAndCompareQuiz } = require("../controllers/course-controller.js");
+const {
+  newCourse,
+  uploadLecture,
+  getAllCourses,
+  uploadAssignmentFormAdmin,
+  submitAssignment,
+  uploadQuizFromAdmin,
+  fetchAssignmentsById,
+  fetchQuizesById,
+  submitQuiz,
+  uploadAnnouncement,
+  getAnnouncementsByCourseId,
+  getTotalAnnouncements,
+  fetchSubmittedAssignments,
+  fetchSubmittedAssignmentsAdmin,
+  fetchSubmittedQuizes,
+  deleteCourseLecture,
+  fetchSingleQuiz,
+  fetchAndCompareQuiz,
+} = require("../controllers/course-controller.js");
 const { upload } = require("../utils/uploadAssignment.js")
 const path = require("path");
 const { uploadLectureHandout } = require("../controllers/pdf-controller.js");
@@ -21,6 +40,12 @@ router.post("/uploadAnnouncement", protect, isAdmin, uploadAnnouncement);
 router.get("/getAnnouncementsByCourseId/:courseId", protect, getAnnouncementsByCourseId);
 router.get("/getTotalAnnouncements", protect, isAdmin, getTotalAnnouncements);
 router.get("/fetchSubmittedAssignments", protect, fetchSubmittedAssignments);
+router.get(
+  "/admin/fetchSubmittedAssignments",
+  protect,
+  isAdmin,
+  fetchSubmittedAssignmentsAdmin
+);
 router.get("/fetchSubmittedQuizes", protect, fetchSubmittedQuizes);
 router.delete("/deleteCourseLecture/:courseId/lectures/:lectureId", protect, deleteCourseLecture);
 router.post("/fetchSingleQuiz/:quizId", protect, fetchSingleQuiz);

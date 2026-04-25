@@ -9,7 +9,11 @@ import { closeLectureModal, openLectureModal } from "../redux/slices/uiSlice";
 import { toast } from "sonner";
 import { BiCheckDouble } from "react-icons/bi";
 import { MdDeleteOutline } from "react-icons/md";
-import { deleteCourseLecture, getAllCourses } from "../api/courseApi";
+import {
+  deleteCourseLecture,
+  getAllCourses,
+  uploadLectureHandout,
+} from "../api/courseApi";
 import { setCourses } from "../redux/slices/courseSlice";
 import CommentSection from "./CommentSection";
 import { FaFileAlt } from "react-icons/fa";
@@ -32,6 +36,8 @@ const ViewCourse = () => {
   const [completedLectures, setCompletedLectures] = useState({});
   const [comments, setComments] = useState([]);
   const [selectLecture, setSelectLecture] = useState(null);
+  const [handoutLectureId, setHandoutLectureId] = useState(null);
+  const handoutInputRef = useRef(null);
 
   const allCourses = useSelector((store) => store.course.courses);
   const course = allCourses?.find((c) => c._id === paramId);
@@ -238,13 +244,41 @@ const ViewCourse = () => {
     }
   };
 
-  const handlePDF = (id) => {
-    if (!id && courseId) return;
-    const res = await uploadLectureHandout(courseId, id, )
-  }
+  const handlePDF = (lectureId) => {
+    if (!courseId || !lectureId) return;
+    setHandoutLectureId(lectureId);
+    handoutInputRef.current?.click();
+  };
+
+  const handleHandoutFileChange = async (e) => {
+    const file = e.target.files?.[0];
+    const lectureId = handoutLectureId;
+
+    // allow re-selecting same file next time
+    e.target.value = "";
+
+    if (!courseId || !lectureId || !file) return;
+
+    try {
+      const res = await uploadLectureHandout(courseId, lectureId, file);
+      if (res?.success) toast("✅ Handout uploaded successfully");
+      else toast(res?.message || "Failed to upload handout");
+    } catch (error) {
+      toast(error?.response?.data?.message || error?.message || "Upload failed");
+    } finally {
+      setHandoutLectureId(null);
+    }
+  };
 
   return (
     <div className="min-h-screen bg-[#F2F3F8] py-8 px-2 md:px-8 mt-18">
+      <input
+        ref={handoutInputRef}
+        type="file"
+        accept=".pdf,.doc,.docx,.ppt,.pptx,application/pdf,application/msword,application/vnd.openxmlformats-officedocument.wordprocessingml.document,application/vnd.ms-powerpoint,application/vnd.openxmlformats-officedocument.presentationml.presentation"
+        className="hidden"
+        onChange={handleHandoutFileChange}
+      />
       <div className="flex items-center">
         <span className="text-2xl mx-auto md:mx-0 font-semibold">
           {course?.courseName}

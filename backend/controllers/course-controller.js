@@ -390,6 +390,24 @@ const fetchSubmittedAssignments = async (_, res) => {
   }
 };
 
+// admin: show submissions with student + assignment details
+const fetchSubmittedAssignmentsAdmin = async (_, res) => {
+  try {
+    const submittedAssignments = await SubmitedAssignment.find()
+      .populate("studentId", "name email profilePicture role")
+      .populate("assignmentId", "selectedCourse dueDate totalMarks assignmentFile");
+
+    return res.status(200).json({
+      success: true,
+      message: "Submitted Assignments fetched successfully",
+      submittedAssignments,
+    });
+  } catch (error) {
+    console.error(error);
+    res.status(500).send("Failed to fetch submitted Assignments!");
+  }
+};
+
 const fetchSubmittedQuizes = async (_, res) => {
   try {
     const submittedQuizes = await SubmitedQuiz.find();
@@ -560,6 +578,7 @@ module.exports = {
   getAnnouncementsByCourseId,
   getTotalAnnouncements,
   fetchSubmittedAssignments,
+  fetchSubmittedAssignmentsAdmin,
   fetchSubmittedQuizes,
   deleteCourseLecture,
   fetchSingleQuiz,

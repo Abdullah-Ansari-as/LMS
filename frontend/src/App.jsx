@@ -30,6 +30,7 @@ import ManageStudents from "./components/admin/ManageStudents";
 import PaymentForm from "./components/admin/PaymentForm";
 import NoticeBoardAnnouncements from "./components/admin/NoticeBoardAnnouncements";
 import AddNewCourse from "./components/admin/AddNewCourse";
+import SubmittedAssignments from "./components/admin/SubmittedAssignments";
 import ProtectedRoute from "./utils/ProtectedRoute";
 import RoleProtectedRoute from "./utils/RoleProtectedRoute";
 import { useSelector } from "react-redux";
@@ -84,7 +85,7 @@ function App() {
         {/* Root redirect - handles both authenticated and unauthenticated users */}
         <Route path="/" element={<RootRedirect />} />
 
-        {/* Student Routes - Only accessible by users with role 'user' */}
+        {/* Student Routes - Only accessible by users with role 'student' */}
         <Route
           path="/"
           element={
@@ -144,6 +145,7 @@ function App() {
           <Route path="manage-students" element={<ManageStudents />} />
           <Route path="payments" element={<PaymentForm />} />
           <Route path="announcements" element={<NoticeBoardAnnouncements />} />
+          <Route path="submitted-assignments" element={<SubmittedAssignments />} />
         </Route>
 
         {/* Public Routes - Accessible by everyone (no authentication required) */}

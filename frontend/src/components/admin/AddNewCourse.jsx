@@ -1,8 +1,10 @@
 import React, { useState } from "react";
 import { IoIosArrowRoundBack } from "react-icons/io";
 import { useNavigate } from "react-router-dom";
-import { uploadNewCourse } from "../../api/courseApi";
+import { getAllCourses, uploadNewCourse } from "../../api/courseApi";
 import { toast } from "sonner";
+import { useDispatch } from "react-redux";
+import { setCourses } from "../../redux/slices/courseSlice";
 
 const AddNewCourse = () => {
   const [courseName, setCourseName] = useState("");
@@ -17,6 +19,7 @@ const AddNewCourse = () => {
   const [loading, setLoading] = useState(false);
 
   const navigate = useNavigate();
+  const dispatch = useDispatch();
 
   const handleSubmit = async (e) => {
     e.preventDefault();
@@ -40,6 +43,14 @@ const AddNewCourse = () => {
         toast.success(result.message);
         setLoading(false);
 
+        // Refresh course list so admin dropdowns/panels update immediately
+        try {
+          const data = await getAllCourses();
+          if (data?.success) dispatch(setCourses(data.allCourses || []));
+        } catch (e) {
+          /* ignore */
+        }
+
         // Clear form
         setCourseName("");
         setDescription("");
@@ -51,6 +62,7 @@ const AddNewCourse = () => {
           university: "",
         });
 
+        navigate("/admin/manage-courses");
       }
     } catch (error) {
       console.error(error);

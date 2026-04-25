@@ -45,11 +45,14 @@ const register = async (req, res) => {
 
 const login = async (req, res) => {
 	const { email, password } = req.body;
+	console.log(email, password);
 	try {
 		let user = await User.findOne({ email });
 		if (!user) {
 			return res.status(404).json({ message: "Please signup first!" });
 		}
+
+		console.log(user);
 
 		const isPasswordValid = await bcrypt.compare(password, user.password);
 		if (!isPasswordValid) {

@@ -1,27 +1,37 @@
 import { MdOutlineArrowLeft } from "react-icons/md";
 import { Link, useParams } from "react-router-dom";
 import courseBG from "/courcebg.png";
-import { GiWhiteBook } from "react-icons/gi";
 import { MdCameraRoll } from "react-icons/md";
 import { useDispatch, useSelector } from "react-redux";
 import { useEffect, useRef, useState } from "react";
 import { closeLectureModal, openLectureModal } from "../redux/slices/uiSlice";
 import { toast } from "sonner";
 import { BiCheckDouble } from "react-icons/bi";
-import { MdDeleteOutline } from "react-icons/md";
-import {
-  deleteCourseLecture,
-  getAllCourses,
-  uploadLectureHandout,
-} from "../api/courseApi";
-import { setCourses } from "../redux/slices/courseSlice";
 import CommentSection from "./CommentSection";
 import { FaFileAlt } from "react-icons/fa";
+import { X } from "lucide-react";
+import { getAllCourses } from "../api/courseApi";
+import { setCourses } from "../redux/slices/courseSlice";
 
 const ViewCourse = () => {
   const params = useParams();
   const paramId = params.courseId;
   const dispatch = useDispatch();
+
+  useEffect(() => {
+    const fetchLatestCourses = async () => {
+      try {
+        const data = await getAllCourses();
+        if (data?.success) {
+          dispatch(setCourses(data.allCourses || []));
+        }
+      } catch (error) {
+        console.error("Failed to refresh course data:", error);
+      }
+    };
+
+    fetchLatestCourses();
+  }, [dispatch]);
 
   useEffect(() => {
     const saved = localStorage.getItem("completedLectures");
@@ -32,20 +42,14 @@ const ViewCourse = () => {
   const { user } = useSelector((store) => store.user);
 
   const [currentLecture, setCurrentLecture] = useState(null);
-  const [loading, setLoading] = useState(false);
   const [completedLectures, setCompletedLectures] = useState({});
   const [comments, setComments] = useState([]);
   const [selectLecture, setSelectLecture] = useState(null);
-  const [handoutLectureId, setHandoutLectureId] = useState(null);
-  const handoutInputRef = useRef(null);
+  const [selectedHandoutLecture, setSelectedHandoutLecture] = useState(null);
 
   const allCourses = useSelector((store) => store.course.courses);
   const course = allCourses?.find((c) => c._id === paramId);
   const LectureData = course?.lectures || [];
-  const courseId = course._id || "";
-  console.log("coursecourse", course)
-
-  const courseData = useSelector((store) => store.course.courses);
 
   const isOpen = useSelector((state) => state.ui.isLectureModalOpen);
 
@@ -227,58 +231,60 @@ const ViewCourse = () => {
     }
   }, [isOpen]);
 
-  const handleDeleteLecture = async (id) => {
-    try {
-      await deleteCourseLecture(paramId, id);
-      toast("❌ Lecture deleted successfully");
-
-      const fetchCourses = async () => {
-        const data = await getAllCourses();
-        if (data.success) {
-          dispatch(setCourses(data.allCourses));
-        }
-      };
-      fetchCourses();
-    } catch (error) {
-      console.log(error.message);
+  const openHandoutModal = (lecture) => {
+    if (!lecture?.handout?.fileUrl) {
+      toast("No handout uploaded for this lecture yet.");
+      return;
     }
+
+    setSelectedHandoutLecture(lecture);
   };
 
-  const handlePDF = (lectureId) => {
-    if (!courseId || !lectureId) return;
-    setHandoutLectureId(lectureId);
-    handoutInputRef.current?.click();
+  const closeHandoutModal = () => {
+    setSelectedHandoutLecture(null);
   };
 
-  const handleHandoutFileChange = async (e) => {
-    const file = e.target.files?.[0];
-    const lectureId = handoutLectureId;
+  const getFileExtension = (fileName = "", fileUrl = "") => {
+    const source = fileName || fileUrl;
+    return source.split(".").pop()?.split("?")[0]?.toLowerCase() || "";
+  };
 
-    // allow re-selecting same file next time
-    e.target.value = "";
+  const getHandoutPreviewType = (lecture) => {
+    const extension = getFileExtension(
+      lecture?.handout?.fileName,
+      lecture?.handout?.fileUrl,
+    );
 
-    if (!courseId || !lectureId || !file) return;
-
-    try {
-      const res = await uploadLectureHandout(courseId, lectureId, file);
-      if (res?.success) toast("✅ Handout uploaded successfully");
-      else toast(res?.message || "Failed to upload handout");
-    } catch (error) {
-      toast(error?.response?.data?.message || error?.message || "Upload failed");
-    } finally {
-      setHandoutLectureId(null);
+    if (["png", "jpg", "jpeg", "gif", "webp", "svg"].includes(extension)) {
+      return "image";
     }
+
+    if (["pdf", "txt", "md"].includes(extension)) {
+      return "iframe";
+    }
+
+    if (["doc", "docx", "ppt", "pptx", "xls", "xlsx"].includes(extension)) {
+      return "office";
+    }
+
+    return "fallback";
+  };
+
+  const getHandoutPreviewUrl = (lecture) => {
+    const fileUrl = lecture?.handout?.fileUrl;
+    if (!fileUrl) return "";
+
+    const previewType = getHandoutPreviewType(lecture);
+
+    if (previewType === "office") {
+      return `https://view.officeapps.live.com/op/embed.aspx?src=${encodeURIComponent(fileUrl)}`;
+    }
+
+    return fileUrl;
   };
 
   return (
     <div className="min-h-screen bg-[#F2F3F8] py-8 px-2 md:px-8 mt-18">
-      <input
-        ref={handoutInputRef}
-        type="file"
-        accept=".pdf,.doc,.docx,.ppt,.pptx,application/pdf,application/msword,application/vnd.openxmlformats-officedocument.wordprocessingml.document,application/vnd.ms-powerpoint,application/vnd.openxmlformats-officedocument.presentationml.presentation"
-        className="hidden"
-        onChange={handleHandoutFileChange}
-      />
       <div className="flex items-center">
         <span className="text-2xl mx-auto md:mx-0 font-semibold">
           {course?.courseName}
@@ -383,10 +389,6 @@ const ViewCourse = () => {
                       <span className="text-xs text-gray-500 bg-gray-100 px-2 py-1 rounded">
                         {lecture.duration || "N/A"}
                       </span>
-                      <MdDeleteOutline
-                        onClick={() => handleDeleteLecture(lecture._id)}
-                        className="hover:text-red-500 text-xl cursor-pointer transition-colors duration-200"
-                      />
                     </div>
                   </div>
                   <div className="flex justify-between items-center mt-3">
@@ -404,7 +406,14 @@ const ViewCourse = () => {
                       </span>
 
                       {/* Handouts */}
-                      <span onClick={() => handlePDF(lecture._id)} className="flex cursor-pointer items-center text-xs text-gray-600 bg-blue-50 px-2 py-1 rounded-md">
+                      <span
+                        onClick={() => openHandoutModal(lecture)}
+                        className={`flex items-center text-xs px-2 py-1 rounded-md ${
+                          lecture?.handout?.fileUrl
+                            ? "cursor-pointer text-gray-600 bg-blue-50"
+                            : "cursor-not-allowed text-gray-400 bg-gray-100"
+                        }`}
+                      >
                         <FaFileAlt className="mr-1 text-blue-500" />
                         Handout
                       </span>
@@ -568,6 +577,75 @@ const ViewCourse = () => {
                   />
                 </div>
               </div>
+            </div>
+          </div>
+        </div>
+      )}
+
+      {selectedHandoutLecture && (
+        <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/70 px-4 py-6 backdrop-blur-sm">
+          <div className="relative flex h-[85vh] w-full max-w-5xl flex-col overflow-hidden rounded-2xl bg-white shadow-2xl">
+            <button
+              onClick={closeHandoutModal}
+              className="absolute right-4 top-4 z-10 rounded-full bg-gray-900 p-2 text-white transition hover:bg-black"
+              aria-label="Close handout"
+            >
+              <X className="h-5 w-5" />
+            </button>
+
+            <div className="border-b px-6 py-4 pr-16">
+              <h2 className="text-lg font-semibold text-gray-900">
+                {selectedHandoutLecture.handout?.fileName || selectedHandoutLecture.lectureTitle}
+              </h2>
+              <p className="text-sm text-gray-500">
+                {selectedHandoutLecture.lectureTitle}
+              </p>
+            </div>
+
+            <div className="flex-1 bg-gray-50 p-4">
+              {getHandoutPreviewType(selectedHandoutLecture) === "image" ? (
+                <div className="flex h-full items-center justify-center overflow-auto rounded-xl bg-white p-4">
+                  <img
+                    src={selectedHandoutLecture.handout.fileUrl}
+                    alt={selectedHandoutLecture.handout.fileName || "Lecture handout"}
+                    className="max-h-full max-w-full object-contain"
+                  />
+                </div>
+              ) : getHandoutPreviewType(selectedHandoutLecture) === "iframe" ||
+                getHandoutPreviewType(selectedHandoutLecture) === "office" ? (
+                <iframe
+                  src={getHandoutPreviewUrl(selectedHandoutLecture)}
+                  title={selectedHandoutLecture.handout?.fileName || "Lecture handout"}
+                  className="h-full w-full rounded-xl border border-gray-200 bg-white"
+                />
+              ) : (
+                <div className="flex h-full flex-col items-center justify-center rounded-xl border border-dashed border-gray-300 bg-white px-6 text-center">
+                  <FaFileAlt className="mb-4 h-12 w-12 text-blue-500" />
+                  <p className="text-base font-medium text-gray-800">
+                    Preview is not available for this file type.
+                  </p>
+                  <p className="mt-2 text-sm text-gray-500">
+                    You can open the handout in a new tab.
+                  </p>
+                </div>
+              )}
+            </div>
+
+            <div className="flex justify-end gap-3 border-t bg-white px-6 py-4">
+              <a
+                href={selectedHandoutLecture.handout?.fileUrl}
+                target="_blank"
+                rel="noreferrer"
+                className="rounded-lg bg-blue-600 px-4 py-2 text-sm font-medium text-white transition hover:bg-blue-700"
+              >
+                Open In New Tab
+              </a>
+              <button
+                onClick={closeHandoutModal}
+                className="rounded-lg border border-gray-300 px-4 py-2 text-sm font-medium text-gray-700 transition hover:bg-gray-50"
+              >
+                Close
+              </button>
             </div>
           </div>
         </div>

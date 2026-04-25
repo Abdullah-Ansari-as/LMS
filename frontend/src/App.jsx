@@ -38,7 +38,6 @@ import { isTokenExpired } from "./utils/checkToken";
 import Chatbot from "./pages/Chatbot";
 import ShowSubmittedSingleQuiz from "./components/admin/ShowSubmittedSingleQuiz";
 import Success from "./pages/Success";
-import CheckoutPage from "./pages/CheckoutPage";
 
 const GuestOnlyRoute = ({ children }) => {
   const { user } = useSelector((state) => state.user);
@@ -116,7 +115,6 @@ function App() {
           <Route path="mystudiedcourses" element={<MyStudiedCourses />} />
           <Route path="chatbot" element={<Chatbot />} />
           <Route path="noticeboard" element={<NoticeBoard />} />
-          <Route path="checkout" element={<CheckoutPage />} />
           <Route path="success" element={<Success />} />
         </Route>
 

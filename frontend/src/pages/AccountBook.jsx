@@ -1,4 +1,5 @@
 import React, { useEffect, useState } from "react";
+import { Elements } from "@stripe/react-stripe-js";
 import {
   FaCcStripe,
   FaCheckCircle,
@@ -6,10 +7,10 @@ import {
   FaClock,
 } from "react-icons/fa";
 import { useSelector } from "react-redux";
-import { getPayment, updatePaymentStatus } from "../api/paymentApi";
+import { getPayment } from "../api/paymentApi";
 import { Loader2, RefreshCw } from "lucide-react";
 import { CheckoutForm } from "../components/CheckoutForm";
-import { toast } from "sonner"; // IMPORTANT: Add this import
+import { stripePromise } from "../stripe";
 
 const AccountBook = () => {
   const { user } = useSelector((store) => store.user);
@@ -241,7 +242,7 @@ const AccountBook = () => {
                     {item.description || "Payment"}
                   </td>
                   <td className="px-4 py-3 border border-gray-300 text-center">
-                    Rs. {formatPKR(item.ammount) || 0}
+                    {formatPKR(item.ammount || 0)}
                   </td>
                   <td className="px-4 py-3 border border-gray-300 text-center text-green-700">
                     {item.dueDate
@@ -440,11 +441,13 @@ const PaymentModal = ({ onClose, transaction, onPaymentSuccess }) => {
               </p>
             </div>
 
-            <CheckoutForm
-              amount={transaction?.ammount}
-              transactionId={transaction?._id || transaction?.challanNo}
-              onSuccess={handlePaymentSuccess}
-            />
+            <Elements stripe={stripePromise}>
+              <CheckoutForm
+                amount={transaction?.ammount}
+                transactionId={transaction?._id}
+                onSuccess={handlePaymentSuccess}
+              />
+            </Elements>
           </>
         )}
       </div>

@@ -1,32 +1,51 @@
 import React, { useState } from "react";
-import { useSelector } from "react-redux";
+import { useDispatch, useSelector } from "react-redux";
 import { Link } from "react-router-dom";
-import { uploadLecture } from "../../api/courseApi";
+import { deleteCourseLecture, getAllCourses, uploadLecture } from "../../api/courseApi";
 import { toast } from "sonner";
-import { Loader2 } from "lucide-react";
+import { Loader2, Trash2 } from "lucide-react";
+import { setCourses } from "../../redux/slices/courseSlice";
 
 const ManageCourses = () => {
 	const [selectedCourse, setSelectedCourse] = useState("");
 	const [lectureTitle, setLectureTitle] = useState("");
 	const [lectureUrl, setLectureUrl] = useState("");
+	const [handoutFile, setHandoutFile] = useState(null);
 	const [loading, setLoading] = useState(false);
+	const [deletingLectureId, setDeletingLectureId] = useState(null);
 
+	const dispatch = useDispatch();
 	const allCourses = useSelector((store) => store.course.courses);
+	const selectedCourseData = allCourses.find((course) => course.courseName === selectedCourse);
+	const selectedCourseLectures = selectedCourseData?.lectures || [];
+
+	const refreshCourses = async () => {
+		const result = await getAllCourses();
+		if (result?.success) {
+			dispatch(setCourses(result.allCourses || []));
+		}
+	};
 
 	const handleSubmit = async () => {
-		const data = {
-			course: selectedCourse,
-			lectureTitle,
-			lectureUrl,
-		};
 		try {
+			const formData = new FormData();
+			formData.append("course", selectedCourse);
+			formData.append("lectureTitle", lectureTitle);
+			formData.append("lectureUrl", lectureUrl);
+
+			if (handoutFile) {
+				formData.append("handoutFile", handoutFile);
+			}
+
 			setLoading(true)
-			const result = await uploadLecture(data); 
+			const result = await uploadLecture(formData); 
 			if (result.success) {
 				setLoading(false);
 				toast.success(`${result.message} for ${result.course.courseName}`);
+				await refreshCourses();
 				setLectureTitle("");
 				setLectureUrl("");
+				setHandoutFile(null);
 				setSelectedCourse("");
 			}
 		} catch (error) {
@@ -35,6 +54,24 @@ const ManageCourses = () => {
 			console.error(error);
 		}
 
+	};
+
+	const handleDeleteLecture = async (lectureId) => {
+		if (!selectedCourseData?._id || !lectureId) return;
+
+		try {
+			setDeletingLectureId(lectureId);
+			const result = await deleteCourseLecture(selectedCourseData._id, lectureId);
+			if (result?.success) {
+				toast.success(result.message || "Lecture deleted successfully");
+				await refreshCourses();
+			}
+		} catch (error) {
+			console.error(error);
+			toast.error(error?.response?.data?.message || "Failed to delete lecture");
+		} finally {
+			setDeletingLectureId(null);
+		}
 	};
 
 	return (
@@ -86,6 +123,14 @@ const ManageCourses = () => {
 						onChange={(e) => setLectureUrl(e.target.value)}
 						required
 					/>
+					<input
+						type="file"
+						className="file-input file-input-bordered w-full mb-2"
+						onChange={(e) => setHandoutFile(e.target.files?.[0] || null)}
+					/>
+					<p className="text-xs text-gray-500 mb-3">
+						Optional handout file. You can upload documents like `.pdf`, `.doc`, `.docx`, `.txt`, or other lecture files.
+					</p>
 					{
 						loading ? (
 							<button className='btn bg-gray-300 cursor-not-allowed'><div className="flex items-center justify-center">Loading <Loader2 className='m-1 w-5 h-5 animate-spin' /></div></button>
@@ -99,6 +144,55 @@ const ManageCourses = () => {
 							</button>
 						)
 					}
+				</div>
+
+				<div className="mt-8">
+					<h3 className="text-lg md:text-xl font-bold mb-3">Manage Uploaded Lectures</h3>
+					{selectedCourse ? (
+						selectedCourseLectures.length > 0 ? (
+							<div className="space-y-3">
+								{selectedCourseLectures.map((lecture, index) => (
+									<div
+										key={lecture._id}
+										className="flex flex-col gap-3 rounded-lg border border-gray-200 bg-white p-4 md:flex-row md:items-center md:justify-between"
+									>
+										<div className="min-w-0">
+											<p className="font-medium text-gray-900">
+												{index + 1}. {lecture.lectureTitle}
+											</p>
+											<p className="truncate text-sm text-gray-500">
+												{lecture.lectureUrl}
+											</p>
+											<p className="mt-1 text-xs text-gray-500">
+												Handout: {lecture?.handout?.fileName || "No handout uploaded"}
+											</p>
+										</div>
+										<button
+											type="button"
+											onClick={() => handleDeleteLecture(lecture._id)}
+											disabled={deletingLectureId === lecture._id}
+											className="inline-flex items-center justify-center gap-2 rounded-lg border border-red-200 px-4 py-2 text-sm font-medium text-red-600 transition hover:bg-red-50 disabled:cursor-not-allowed disabled:opacity-60"
+										>
+											{deletingLectureId === lecture._id ? (
+												<Loader2 className="h-4 w-4 animate-spin" />
+											) : (
+												<Trash2 className="h-4 w-4" />
+											)}
+											Delete Lecture
+										</button>
+									</div>
+								))}
+							</div>
+						) : (
+							<div className="rounded-lg border border-dashed border-gray-300 bg-white p-6 text-sm text-gray-500">
+								No lectures uploaded for the selected course yet.
+							</div>
+						)
+					) : (
+						<div className="rounded-lg border border-dashed border-gray-300 bg-white p-6 text-sm text-gray-500">
+							Select a course to manage its lectures.
+						</div>
+					)}
 				</div>
 
 				<h2 className="font-semibold text-lg mt-8 underline">Other Activities:</h2>

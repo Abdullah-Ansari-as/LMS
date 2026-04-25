@@ -68,7 +68,19 @@ const uploadLecture = async (req, res) => {
       return res.status(404).json({ message: "Course not found" });
     }
 
-    existingCourse.lectures.push({ lectureTitle, lectureUrl });
+    const newLecture = {
+      lectureTitle,
+      lectureUrl,
+    };
+
+    if (req.file) {
+      newLecture.handout = {
+        fileUrl: req.file.path,
+        fileName: req.file.originalname,
+      };
+    }
+
+    existingCourse.lectures.push(newLecture);
 
     const savedCourse = await existingCourse.save();
 
@@ -371,9 +383,11 @@ const getTotalAnnouncements = async (_, res) => {
   }
 };
 
-const fetchSubmittedAssignments = async (_, res) => {
+const fetchSubmittedAssignments = async (req, res) => {
   try {
-    const submittedAssignments = await SubmitedAssignment.find();
+    const submittedAssignments = await SubmitedAssignment.find({
+      studentId: req.user._id,
+    });
     if (!submittedAssignments) {
       return res
         .status(404)

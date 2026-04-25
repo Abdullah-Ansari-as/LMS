@@ -12,6 +12,7 @@ const ManageCourses = () => {
 	const [loading, setLoading] = useState(false);
 
 	const allCourses = useSelector((store) => store.course.courses);
+	console.log("allCourses: ",allCourses)
 
 	const handleSubmit = async () => {
 		const data = {

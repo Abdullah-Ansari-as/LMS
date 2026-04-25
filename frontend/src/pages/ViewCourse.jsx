@@ -239,8 +239,8 @@ const ViewCourse = () => {
   };
 
   const handlePDF = (id) => {
-    if (!id && courseId) return;
-    const res = await uploadLectureHandout(courseId, id, )
+    // if (!id && courseId) return;
+    // const res = await uploadLectureHandout(courseId, id, )
   }
 
   return (

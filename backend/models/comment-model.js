@@ -15,6 +15,10 @@ const replySchema = new mongoose.Schema(
 const commentSchema = new mongoose.Schema(
   {
     userInput: { type: String, required: true, trim: true },
+     lectureId: {
+      type: mongoose.Schema.Types.ObjectId,
+      required: true,
+    },
     user: {
       type: mongoose.Schema.Types.ObjectId,
       ref: "User",

@@ -32,6 +32,7 @@ app.use(cookieParser());
 app.use(express.json());
 app.use(express.urlencoded({ extended: true }));
 
+
 /* ✅ Database */
 connectDB();
 
@@ -50,6 +51,7 @@ app.use("/api/nbannounce", nbannounceRoutes);
 app.use("/api/notes", notesRoutes);
 app.use("/api/gemini", geminiRoute);
 app.use("/api/comments", commentRoute);
+
 
 /* ✅ Server */
 const PORT = process.env.PORT || 3000;

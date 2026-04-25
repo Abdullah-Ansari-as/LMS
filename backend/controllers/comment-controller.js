@@ -6,12 +6,14 @@ const { isValidObjectId } = require("mongoose");
 const createComment = async (req, res) => {
   try {
     const { userInput } = req.body;
+    const { lectureId } = req.params;
 
     if (!userInput.trim()) {
       return res.status(400).json({ message: "Comment can't be empty" });
     }
 
     const comment = await Comment.create({
+      lectureId,
       userInput,
       user: req.user._id,
     });
@@ -86,12 +88,64 @@ const deleteComment = async (req, res) => {
     }
 
     if (!comment.user.equals(req.user._id)) {
-  return res.status(403).json({ message: "Unauthorized" });
-}
-
+      return res.status(403).json({ message: "Unauthorized" });
+    }
 
     await comment.deleteOne();
-    res.status(200).json({message: "Comment deleted!!"})
+    res.status(200).json({ message: "Comment deleted!!" });
+  } catch (error) {
+    res.status(500).json({ message: error.message });
+  }
+};
+
+const deleteReply = async (req, res) => {
+  try {
+    const { commentId, replyId } = req.params;
+
+    if (!isValidObjectId(commentId) || !isValidObjectId(replyId)) {
+      return res.status(400).json({
+        success: false,
+        message: "Invalid comment ID or Invlaid Reply Id",
+      });
+    }
+
+    const comment = await Comment.findById(commentId);
+    if (!comment) {
+      return res.status(404).json({ message: "Comment not found!!" });
+    }
+
+    comment.replies = comment.replies.filter(
+      (reply) => reply._id.toString() !== replyId,
+    );
+
+    await comment.save();
+
+    res.status(200).json({ comment, message: "reply deleted successfully" });
+  } catch (error) {
+    res.status(500).json({ message: error.message });
+  }
+};
+
+const getCommentsByLecture = async (req, res) => {
+  try {
+    const { lectureId } = req.params;
+
+    const comments = await Comment.find({ lectureId })
+      .populate("user", "name profilePicture")
+      .populate("replies.user", "name profilePicture")
+      .sort({ createdAt: -1 });
+
+    if (!comments) {
+      return res.status(404).json({ message: "Comments not found" });
+    }
+    if (!isValidObjectId(lectureId)) {
+      return res.status(400).json({
+        success: false,
+        message: "Invalid lecture ID",
+      });
+    }
+
+    res.status(200).json(comments);
   } catch (error) {
     res.status(500).json({ message: error.message });
   }
@@ -102,4 +156,6 @@ module.exports = {
   addReply,
   getAllComments,
   deleteComment,
+  deleteReply,
+  getCommentsByLecture,
 };

@@ -19,6 +19,7 @@ const navLinks = [
 	{ name: "Manage Courses", path: "/admin/manage-courses", icon: <BookOpen size={20} /> },
 	{ name: "Manage Payments", path: "/admin/payments", icon: <Users size={20} /> },
 	{ name: "Upload Grades", path: "/admin/upload-grades", icon: <FilePlus2 size={20} /> },
+	{ name: "Submitted Assignments", path: "/admin/submitted-assignments", icon: <FilePlus2 size={20} /> },
 	{ name: "Announcements", path: "/admin/announcements", icon: <Megaphone size={20} /> },
 ];
 

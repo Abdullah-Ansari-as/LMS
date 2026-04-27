@@ -6,6 +6,10 @@ const paymentSchema = new mongoose.Schema({
     ref: 'User',
     required: true
   },
+  createdBy: {
+    type: mongoose.Schema.Types.ObjectId,
+    ref: 'User'
+  },
   challanNo: {
     type: String,
     required: true

@@ -15,7 +15,7 @@ const getAuthHeaders = () => {
 export const uploadPayment = async (paymentData) => {
   try {
     const response = await axios.post(
-      `${API_URL}/payments/upload-payment`,
+      `${API_URL}/api/payments/upload-payment`,
       paymentData,
       getAuthHeaders()
     );
@@ -28,7 +28,7 @@ export const uploadPayment = async (paymentData) => {
 
 export const getPayment = async () => {
   try {
-    const response = await axios.get(`${API_URL}/payments/getPayment`, getAuthHeaders());
+    const response = await axios.get(`${API_URL}/api/payments/getPayment`, getAuthHeaders());
     return response.data;
   } catch (error) {
     console.error('Get payment error:', error.response?.data || error.message);
@@ -36,11 +36,11 @@ export const getPayment = async () => {
   }
 };
 
-export const createPaymentIntent = async (amount, transactionId) => {
+export const createPaymentIntent = async (transactionId) => {
   try {
     const response = await axios.post(
-      `${API_URL}/payments/createPaymentIntent`,
-      { amount, transactionId },
+      `${API_URL}/api/payments/createPaymentIntent`,
+      { transactionId },
       getAuthHeaders()
     );
     return response.data;
@@ -53,7 +53,7 @@ export const createPaymentIntent = async (amount, transactionId) => {
 export const updatePaymentStatus = async (paymentData) => {
   try {
     const response = await axios.post(
-      `${API_URL}/payments/update-status`,
+      `${API_URL}/api/payments/update-status`,
       paymentData,
       getAuthHeaders()
     );

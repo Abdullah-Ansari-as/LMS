@@ -68,7 +68,19 @@ const uploadLecture = async (req, res) => {
       return res.status(404).json({ message: "Course not found" });
     }
 
-    existingCourse.lectures.push({ lectureTitle, lectureUrl });
+    const newLecture = {
+      lectureTitle,
+      lectureUrl,
+    };
+
+    if (req.file) {
+      newLecture.handout = {
+        fileUrl: req.file.path,
+        fileName: req.file.originalname,
+      };
+    }
+
+    existingCourse.lectures.push(newLecture);
 
     const savedCourse = await existingCourse.save();
 
@@ -371,14 +383,34 @@ const getTotalAnnouncements = async (_, res) => {
   }
 };
 
-const fetchSubmittedAssignments = async (_, res) => {
+const fetchSubmittedAssignments = async (req, res) => {
   try {
-    const submittedAssignments = await SubmitedAssignment.find();
+    const submittedAssignments = await SubmitedAssignment.find({
+      studentId: req.user._id,
+    });
     if (!submittedAssignments) {
       return res
         .status(404)
         .json({ message: "SubmittedAssignments not found!" });
     }
+    return res.status(200).json({
+      success: true,
+      message: "Submitted Assignments fetched successfully",
+      submittedAssignments,
+    });
+  } catch (error) {
+    console.error(error);
+    res.status(500).send("Failed to fetch submitted Assignments!");
+  }
+};
+
+// admin: show submissions with student + assignment details
+const fetchSubmittedAssignmentsAdmin = async (_, res) => {
+  try {
+    const submittedAssignments = await SubmitedAssignment.find()
+      .populate("studentId", "name email profilePicture role")
+      .populate("assignmentId", "selectedCourse dueDate totalMarks assignmentFile");
+
     return res.status(200).json({
       success: true,
       message: "Submitted Assignments fetched successfully",
@@ -560,6 +592,7 @@ module.exports = {
   getAnnouncementsByCourseId,
   getTotalAnnouncements,
   fetchSubmittedAssignments,
+  fetchSubmittedAssignmentsAdmin,
   fetchSubmittedQuizes,
   deleteCourseLecture,
   fetchSingleQuiz,

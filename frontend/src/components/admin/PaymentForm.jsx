@@ -40,6 +40,9 @@ const PaymentForm = () => {
 			<h2 className="text-2xl font-semibold text-gray-800 mb-4">Payment Details</h2>
 			<div className="max-w-xl mx-auto bg-[#F8F8F8] p-3 md:p-6 rounded-lg shadow">
 				<h2 className="text-2xl font-bold mb-4">Add Payment Details</h2>
+				<p className="text-sm text-gray-600 mb-4">
+					This payment will be assigned to all student accounts and will appear in each student's account book.
+				</p>
 
 				<form onSubmit={handleSubmit} className="space-y-4">
 					{/* Due Date */}

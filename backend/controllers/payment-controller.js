@@ -1,5 +1,6 @@
 const Stripe = require("stripe");
 const Payment = require("../models/payment-model.js");
+const User = require("../models/user-model.js");
 
 const stripe = new Stripe(process.env.STRIPE_SECRET_KEY);
 
@@ -7,23 +8,62 @@ const stripe = new Stripe(process.env.STRIPE_SECRET_KEY);
 const payment = async (req, res) => {
   try {
     const { ammount, challanNo, description, dueDate } = req.body;
-    const userId = req.user._id; // Get from auth middleware
+    const createdBy = req.user._id;
+    const numericAmount = Number(ammount);
 
-    const newPayment = new Payment({
-      ammount,
+    if (!numericAmount || numericAmount <= 0) {
+      return res.status(400).json({
+        success: false,
+        message: "Valid payment amount is required",
+      });
+    }
+
+    const students = await User.find({ role: "student" }).select("_id");
+    if (!students.length) {
+      return res.status(404).json({
+        success: false,
+        message: "No students found to assign this payment.",
+      });
+    }
+
+    const existingPayments = await Payment.find({
+      challanNo,
       description,
       dueDate,
-      challanNo,
-      userId,
-      paymentStatus: "pending",
-    });
+      userId: { $in: students.map((student) => student._id) },
+    }).select("userId");
 
-    await newPayment.save();
+    const existingUserIds = new Set(
+      existingPayments.map((paymentRecord) => paymentRecord.userId.toString()),
+    );
+
+    const paymentsToCreate = students
+      .filter((student) => !existingUserIds.has(student._id.toString()))
+      .map((student) => ({
+        ammount: numericAmount,
+        description,
+        dueDate,
+        challanNo,
+        userId: student._id,
+        createdBy,
+        paymentStatus: "pending",
+        paymentMethod: "stripe",
+      }));
+
+    if (!paymentsToCreate.length) {
+      return res.status(409).json({
+        success: false,
+        message: "This payment is already assigned to all students.",
+      });
+    }
+
+    const createdPayments = await Payment.insertMany(paymentsToCreate);
 
     return res.status(201).json({
       success: true,
-      payment: newPayment,
-      message: "Payment uploaded successfully!",
+      payment: createdPayments,
+      assignedCount: createdPayments.length,
+      message: `Payment assigned to ${createdPayments.length} students successfully!`,
     });
   } catch (error) {
     console.error(error);
@@ -101,12 +141,8 @@ const getPayment = async (req, res) => {
 // Create payment intent
 const createPaymentIntent = async (req, res) => {
   try {
-    const { amount, transactionId } = req.body;
+    const { transactionId } = req.body;
     const userId = req.user._id;
-
-    if (!amount || amount <= 0) {
-      return res.status(400).json({ error: "Valid amount is required" });
-    }
 
     if (!transactionId) {
       return res.status(400).json({ error: "Transaction ID is required" });
@@ -122,15 +158,20 @@ const createPaymentIntent = async (req, res) => {
       return res.status(404).json({ error: "Transaction not found" });
     }
 
-    // Convert PKR to USD (cents)
-    const exchangeRate = 0.0036; // 1 PKR = 0.0036 USD
-    const amountPKR = Number(amount);
-    const amountUSD = amountPKR * exchangeRate;
-    const stripeAmount = Math.round(amountUSD * 100);
+    if (payment.paymentStatus === "succeeded") {
+      return res.status(400).json({ error: "This payment has already been completed." });
+    }
+
+    const amountPKR = Number(payment.ammount);
+    if (!amountPKR || amountPKR <= 0) {
+      return res.status(400).json({ error: "This transaction has an invalid amount." });
+    }
+
+    const stripeAmount = Math.round(amountPKR * 100);
 
     // Minimum amount check
     if (stripeAmount < 50) {
-      const minimumPKR = Math.ceil(50 / 100 / exchangeRate);
+      const minimumPKR = Math.ceil(50 / 100);
       return res.status(400).json({
         error: `Minimum payment amount is Rs. ${minimumPKR}`,
       });
@@ -149,13 +190,12 @@ const createPaymentIntent = async (req, res) => {
     const paymentIntent = await stripe.paymentIntents.create(
       {
         amount: stripeAmount,
-        currency: "usd",
-        automatic_payment_methods: { enabled: true },
+        currency: "pkr",
+        payment_method_types: ["card"],
         metadata: {
           amountPKR: amountPKR.toString(),
           transactionId: transactionId,
           userId: userId.toString(),
-          exchangeRate: exchangeRate.toString(),
         },
         description: `Payment for Challan #${payment.challanNo}`,
       },
@@ -173,8 +213,7 @@ const createPaymentIntent = async (req, res) => {
       clientSecret: paymentIntent.client_secret,
       paymentIntentId: paymentIntent.id,
       amountPKR: amountPKR,
-      amountUSD: amountUSD,
-      exchangeRate: exchangeRate,
+      currency: paymentIntent.currency,
       status: paymentIntent.status,
     });
   } catch (error) {
@@ -228,6 +267,7 @@ const updatePaymentStatus = async (req, res) => {
         payment.paymentStatus = "succeeded";
         payment.paidAt = new Date();
         payment.paymentIntentId = paymentIntentId;
+        payment.paymentMethod = "stripe";
         payment.metadata = {
           stripeAmount: paymentIntent.amount,
           currency: paymentIntent.currency,

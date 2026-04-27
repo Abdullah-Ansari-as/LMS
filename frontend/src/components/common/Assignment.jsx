@@ -1,9 +1,8 @@
-import React, { useState } from 'react'
+import React, { useEffect, useMemo, useState } from 'react'
 import { Link, useNavigate, useParams } from 'react-router-dom'
 import courseBG from "/courcebg.png"
 import { MdOutlineArrowLeft } from "react-icons/md";
 import { GoFileSubmodule } from "react-icons/go";
-import { useEffect } from 'react';
 import { fetchAssignmentsById, fetchSubmittedAssignments } from '../../api/courseApi';
 import { useDispatch, useSelector } from 'react-redux';
 import { setAssignments } from '../../redux/slices/courseSlice';
@@ -28,15 +27,26 @@ const Assignment = () => {
 	const dispatch = useDispatch();
 	const navigate = useNavigate();
 
-	const { assignments } = useSelector((store) => store.course.assignments);
+	const assignments = useSelector((store) => store.course.assignments);
+	const submittedAssignmentsFromStore = useSelector((store) => store.course.submittedAssignments);
 
 	const [loading, setLoading] = useState(false);
 	const [totalSubmittedAssignments, setTotalSubmittedAssignments] = useState([])
 
-	const assignmentData = assignments;
+	const assignmentData = useMemo(() => {
+		if (Array.isArray(assignments)) {
+			return assignments;
+		}
+
+		if (Array.isArray(assignments?.assignments)) {
+			return assignments.assignments;
+		}
+
+		return [];
+	}, [assignments]);
 
 
-	const mergedAssignments = assignmentData?.map((assignment, index) => {
+	const mergedAssignments = assignmentData.map((assignment, index) => {
 		const title = `Assignment No ${index + 1}`;
 
 		const result = assignmentsResults.find((res) => res.title === title);
@@ -47,48 +57,77 @@ const Assignment = () => {
 		};
 	});
 
+	const isSubmittedByCurrentUser = (submittedAssignment, assignmentId) => {
+		return String(submittedAssignment?.studentId) === String(user?._id)
+			&& String(submittedAssignment?.assignmentId) === String(assignmentId)
+			&& submittedAssignment?.submit !== false;
+	};
+
 
 	useEffect(() => {
 		const getAllSubmittedAssignments = async () => {
-			const res = await fetchSubmittedAssignments();
-			if (res.success) { 
-				setTotalSubmittedAssignments(res.submittedAssignments)
+			try {
+				const res = await fetchSubmittedAssignments();
+				if (res.success) {
+					setTotalSubmittedAssignments(Array.isArray(res.submittedAssignments) ? res.submittedAssignments : [])
+				}
+			} catch (error) {
+				console.error(error);
 			}
 		}
 		getAllSubmittedAssignments();
 	}, [])
 
+	// If a submission just happened, store updates immediately—reflect it in UI
+	const allSubmittedAssignments = [
+		...(totalSubmittedAssignments || []),
+		...(submittedAssignmentsFromStore || []),
+	];
+
 
 	useEffect(() => {
-		try {
-			const fetchAssignments = async () => {
-				setLoading(true)
+		const fetchAssignments = async () => {
+			setLoading(true);
+
+			try {
 				const result = await fetchAssignmentsById(paramId);
-				if (result.success) {
-					dispatch(setAssignments(result.assignments));
-					setLoading(false);
+				const normalizedAssignments = Array.isArray(result?.assignments?.assignments)
+					? result.assignments.assignments
+					: Array.isArray(result?.assignments)
+						? result.assignments
+						: [];
+
+				if (result?.success) {
+					dispatch(setAssignments(normalizedAssignments));
 				}
+			} catch (error) {
+				console.error(error);
+				dispatch(setAssignments([]));
+			} finally {
+				setLoading(false);
 			}
-			fetchAssignments();
-		} catch (error) {
-			setLoading(false);
-			console.error(error);
 		}
-	}, []);
+
+		if (paramId) {
+			fetchAssignments();
+		}
+	}, [dispatch, paramId]);
 
 	useEffect(() => {
-		try {
-			const assignmentsGrades = async () => {
+		const assignmentsGrades = async () => {
+			try {
 				const result = await getAssignmentsGrades(singleCourse?.courseName);
 				if (result.success) {
-					setAssignmentsResults(result.assignmentResults)
+					setAssignmentsResults(Array.isArray(result.assignmentResults) ? result.assignmentResults : [])
 				}
+			} catch (error) {
+				console.error(error);
 			}
-			assignmentsGrades();
-		} catch (error) {
-			console.error(error);
 		}
-	}, [])
+		if (singleCourse?.courseName) {
+			assignmentsGrades();
+		}
+	}, [singleCourse?.courseName])
 
 
 	return (
@@ -142,14 +181,14 @@ const Assignment = () => {
 											</div>
 
 											<div className="font-medium text-gray-500">Due Date</div>
-											<div className="text-red-500">{assignment.dueDate}</div>
+											<div className="text-red-500">{assignment.dueDate || "N/A"}</div>
 
 											<div className="font-medium text-gray-500">Total Marks</div>
-											<div className="text-[#9865A1]">{assignment.totalMarks.toFixed(2)}</div>
+											<div className="text-[#9865A1]">{Number(assignment.totalMarks || 0).toFixed(2)}</div>
 
 											<div className="font-medium text-gray-500">Submit</div>
 											<div>
-												{totalSubmittedAssignments?.some((s) => s.studentId === user._id && s.assignmentId === assignment._id) ? (
+												{allSubmittedAssignments?.some((s) => isSubmittedByCurrentUser(s, assignment._id)) ? (
 													<span className="text-green-600 font-semibold">Submitted</span>
 												) : (
 													<GoFileSubmodule
@@ -197,13 +236,13 @@ const Assignment = () => {
 														</a>
 													</td>
 													<td className="py-3 px-4 border-r text-red-500 border-gray-200">
-														{assignment.dueDate}
+														{assignment.dueDate || "N/A"}
 													</td>
 													<td className="py-3 px-4 border-r text-[#9865A1] border-gray-200">
-														{assignment.totalMarks.toFixed(2)}
+														{Number(assignment.totalMarks || 0).toFixed(2)}
 													</td>
 													<td className="py-3 px-4 border-r text-blue-900 border-gray-200">
-														{totalSubmittedAssignments?.some((s) => s.studentId === user._id && s.assignmentId === assignment._id) ? (
+														{allSubmittedAssignments?.some((s) => isSubmittedByCurrentUser(s, assignment._id)) ? (
 															<span className="text-green-600 font-semibold">Submitted</span>
 														) : (
 															<GoFileSubmodule

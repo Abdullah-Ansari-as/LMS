@@ -1,12 +1,35 @@
-import React, { useState } from 'react';
+import React, { useEffect, useState } from "react";
 import { Outlet } from 'react-router-dom';
 import AdminLeftSidebar from '../admin/AdminLeftSidebar';
 import { Menu } from 'lucide-react';
+import { useDispatch, useSelector } from "react-redux";
+import { getAllCourses } from "../../api/courseApi";
+import { setCourses } from "../../redux/slices/courseSlice";
 
 const AdminLayout = () => {
 	const [sidebarOpen, setSidebarOpen] = useState(false);
+	const dispatch = useDispatch();
+	const courses = useSelector((store) => store.course.courses);
 
 	const toggleSidebar = () => setSidebarOpen((prev) => !prev);
+
+	useEffect(() => {
+		// Admin pages rely on course list for dropdowns; ensure it's loaded.
+		if (courses && courses.length > 0) return;
+
+		const fetchCourses = async () => {
+			try {
+				const data = await getAllCourses();
+				if (data?.success) {
+					dispatch(setCourses(data.allCourses || []));
+				}
+			} catch (error) {
+				console.error(error);
+			}
+		};
+
+		fetchCourses();
+	}, [dispatch, courses]);
 
 	return (
 		<div className="flex flex-col md:flex-row h-screen relative">

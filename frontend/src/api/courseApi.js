@@ -200,6 +200,7 @@ export const uploadLecture = async (LectureData) => {
       {
         headers: {
           Authorization: `Bearer ${localStorage.getItem("token")}`,
+          "Content-Type": "multipart/form-data",
         },
       },
     );
@@ -239,6 +240,25 @@ export const fetchSubmittedAssignments = async () => {
           Authorization: `Bearer ${localStorage.getItem("token")}`,
         },
       },
+    );
+    return res.data;
+  } catch (error) {
+    console.error(error);
+    throw error;
+  }
+};
+
+export const fetchSubmittedAssignmentsAdmin = async () => {
+  try {
+    const res = await axios.get(
+      `${
+        import.meta.env.VITE_BACKEND_URL
+      }/api/courses/admin/fetchSubmittedAssignments`,
+      {
+        headers: {
+          Authorization: `Bearer ${localStorage.getItem("token")}`,
+        },
+      }
     );
     return res.data;
   } catch (error) {

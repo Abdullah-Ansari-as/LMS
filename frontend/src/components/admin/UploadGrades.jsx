@@ -19,11 +19,14 @@ const UploadGrades = () => {
   const allCourses = useSelector((store) => store.course.courses);
   const submittedQuizes = useSelector((store) => store.course.submittedQuizes);
   //   console.log("submittedQuizes: ", submittedQuizes[0].quizNo)
-  //   console.log("title", title);
+    // console.log("title", title);
 
   const matchedQuiz = submittedQuizes?.find(
     (quiz) => quiz?.quizNo?.toLowerCase() === title.trim().toLowerCase()
+    //  (quiz) => console.log("quiz:", quiz)  //todo There is some glictch here.
   );
+
+  console.log("matchedQuiz:", matchedQuiz)
 
   const handleUpload = async () => {
     if (

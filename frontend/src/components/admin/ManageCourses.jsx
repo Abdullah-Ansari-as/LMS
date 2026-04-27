@@ -27,6 +27,7 @@ const ManageCourses = () => {
 	};
 
 	const handleSubmit = async () => {
+		setLoading(true);
 		try {
 			const formData = new FormData();
 			formData.append("course", selectedCourse);
@@ -34,10 +35,24 @@ const ManageCourses = () => {
 			formData.append("lectureUrl", lectureUrl);
 
 			if (handoutFile) {
+				const extension = handoutFile.name.split(".").pop().toLowerCase();
+				if (!["doc", "docx"].includes(extension)) {
+					toast.error("Only .doc and .docx files are allowed as handouts.");
+					return;
+				}
+
+				// Always append the file
 				formData.append("handoutFile", handoutFile);
+
+				// Also convert .docx to HTML string if possible
+				if (extension === "docx" && window.mammoth) {
+					const arrayBuffer = await handoutFile.arrayBuffer();
+					const result = await window.mammoth.convertToHtml({ arrayBuffer });
+					formData.append("handoutContent", result.value);
+					formData.append("handoutName", handoutFile.name);
+				}
 			}
 
-			setLoading(true)
 			const result = await uploadLecture(formData); 
 			if (result.success) {
 				setLoading(false);
@@ -125,11 +140,12 @@ const ManageCourses = () => {
 					/>
 					<input
 						type="file"
+						accept=".doc,.docx"
 						className="file-input file-input-bordered w-full mb-2"
 						onChange={(e) => setHandoutFile(e.target.files?.[0] || null)}
 					/>
 					<p className="text-xs text-gray-500 mb-3">
-						Optional handout file. You can upload documents like `.pdf`, `.doc`, `.docx`, `.txt`, or other lecture files.
+						Optional handout file. Only `.doc` and `.docx` files are accepted.
 					</p>
 					{
 						loading ? (

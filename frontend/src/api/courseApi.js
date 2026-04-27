@@ -284,6 +284,23 @@ export const fetchSubmittedQuizes = async () => {
   }
 };
 
+export const fetchSubmittedQuizesAdmin = async () => {
+  try {
+    const res = await axios.get(
+      `${import.meta.env.VITE_BACKEND_URL}/api/courses/admin/fetchSubmittedQuizes`,
+      {
+        headers: {
+          Authorization: `Bearer ${localStorage.getItem("token")}`,
+        },
+      },
+    );
+    return res.data;
+  } catch (error) {
+    console.error(error);
+    throw error;
+  }
+};
+
 export const deleteCourseLecture = async (courseId, lectureId) => {
   try {
     const res = await axios.delete(

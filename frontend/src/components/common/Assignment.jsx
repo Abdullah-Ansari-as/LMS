@@ -171,7 +171,7 @@ const Assignment = () => {
 											<div className="font-medium text-gray-500">Assignment</div>
 											<div className="text-blue-400">
 												<a
-													href={`${import.meta.env.VITE_BACKEND_URL}/api/courses/download/${assignment.assignmentFile.split(/[/\\]+/).pop()}`}
+													href={`${import.meta.env.VITE_BACKEND_URL}/api/courses/download?url=${encodeURIComponent(assignment.assignmentFile)}&name=${encodeURIComponent(`Assignment_${index + 1}.docx`)}`}
 													download
 													className="hover:underline"
 													title='click for download file'
@@ -227,7 +227,7 @@ const Assignment = () => {
 													<td className="py-3 px-4 border-r border-gray-200">Assignment No {index + 1}</td>
 													<td className="py-3 px-4 border-r text-blue-400 border-gray-200 duration-200 ease-in-out transition">
 														<a
-															href={`${import.meta.env.VITE_BACKEND_URL}/api/courses/download/${assignment.assignmentFile.split(/[/\\]+/).pop()}`}
+															href={`${import.meta.env.VITE_BACKEND_URL}/api/courses/download?url=${encodeURIComponent(assignment.assignmentFile)}&name=${encodeURIComponent(`Assignment_${index + 1}.docx`)}`}
 															download
 															className="hover:underline"
 															title='click for download file'

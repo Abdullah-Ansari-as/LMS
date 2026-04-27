@@ -31,6 +31,7 @@ import PaymentForm from "./components/admin/PaymentForm";
 import NoticeBoardAnnouncements from "./components/admin/NoticeBoardAnnouncements";
 import AddNewCourse from "./components/admin/AddNewCourse";
 import SubmittedAssignments from "./components/admin/SubmittedAssignments";
+import SubmittedQuizzes from "./components/admin/SubmittedQuizzes";
 import ProtectedRoute from "./utils/ProtectedRoute";
 import RoleProtectedRoute from "./utils/RoleProtectedRoute";
 import { useSelector } from "react-redux";
@@ -144,6 +145,8 @@ function App() {
           <Route path="payments" element={<PaymentForm />} />
           <Route path="announcements" element={<NoticeBoardAnnouncements />} />
           <Route path="submitted-assignments" element={<SubmittedAssignments />} />
+          <Route path="submitted-quizzes" element={<SubmittedQuizzes />} />
+          <Route path="show-submitted-quiz/:quizId" element={<ShowSubmittedSingleQuiz />} />
         </Route>
 
         {/* Public Routes - Accessible by everyone (no authentication required) */}

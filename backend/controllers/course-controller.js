@@ -80,6 +80,14 @@ const uploadLecture = async (req, res) => {
       };
     }
 
+    if (req.body.handoutContent) {
+      newLecture.handout = {
+        ...newLecture.handout,
+        handoutContent: req.body.handoutContent,
+        fileName: req.body.handoutName || "handout.docx",
+      };
+    }
+
     existingCourse.lectures.push(newLecture);
 
     const savedCourse = await existingCourse.save();
@@ -422,9 +430,11 @@ const fetchSubmittedAssignmentsAdmin = async (_, res) => {
   }
 };
 
-const fetchSubmittedQuizes = async (_, res) => {
+const fetchSubmittedQuizes = async (req, res) => {
   try {
-    const submittedQuizes = await SubmitedQuiz.find();
+    const submittedQuizes = await SubmitedQuiz.find({
+      studentId: req.user._id,
+    });
     if (!submittedQuizes) {
       return res.status(404).json({ message: "SubmittedQuizes not found!" });
     }
@@ -436,6 +446,23 @@ const fetchSubmittedQuizes = async (_, res) => {
   } catch (error) {
     console.error(error);
     res.status(500).send("Failed to fetch submitted Quizes!");
+  }
+};
+
+const fetchSubmittedQuizesAdmin = async (_, res) => {
+  try {
+    const submittedQuizes = await SubmitedQuiz.find()
+      .populate("studentId", "name email profilePicture role")
+      .populate("quizId", "quizTitle totalMarks selectedCourse");
+
+    return res.status(200).json({
+      success: true,
+      message: "Submitted Quizzes fetched successfully",
+      submittedQuizes,
+    });
+  } catch (error) {
+    console.error(error);
+    res.status(500).send("Failed to fetch submitted Quizzes!");
   }
 };
 
@@ -594,6 +621,7 @@ module.exports = {
   fetchSubmittedAssignments,
   fetchSubmittedAssignmentsAdmin,
   fetchSubmittedQuizes,
+  fetchSubmittedQuizesAdmin,
   deleteCourseLecture,
   fetchSingleQuiz,
   fetchAndCompareQuiz

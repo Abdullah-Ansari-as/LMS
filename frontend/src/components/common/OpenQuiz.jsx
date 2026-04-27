@@ -5,6 +5,7 @@ import { Link, useNavigate, useParams } from 'react-router-dom';
 import { submitQuiz } from '../../api/courseApi';
 import { setSubmittedQuizes } from '../../redux/slices/courseSlice';
 import { toast } from 'sonner';
+import { Timer } from 'lucide-react';
 
 const OpenQuiz = () => {
   const { id: quizId } = useParams();
@@ -15,11 +16,11 @@ const OpenQuiz = () => {
   const quizIndex = quizes?.findIndex((quiz) => quiz._id === quizId);
   const singleQuizData = quizes?.[quizIndex];
   const quizData = singleQuizData?.quizQuestions || [];
-  // console.log("quizData:", quizData)
 
   const [current, setCurrent] = useState(0);
   const [selectedAnswer, setSelectedAnswer] = useState('');
   const [userResponses, setUserResponses] = useState([]);
+  const [timeLeft, setTimeLeft] = useState(60);
 
   const currentQuestion = quizData[current];
 
@@ -27,19 +28,38 @@ const OpenQuiz = () => {
     setSelectedAnswer(answer);
   };
 
-  const handleNext = () => {
+  const handleNext = (autoSkip = false) => {
     if (current >= quizData.length) return;
 
     const newResponse = {
       question: currentQuestion.question,
       options: currentQuestion.options,
-      selectedAnswer: selectedAnswer,
+      selectedAnswer: autoSkip && !selectedAnswer ? "0" : selectedAnswer,
     };
 
-    setUserResponses([...userResponses, newResponse]);
+    setUserResponses((prev) => [...prev, newResponse]);
     setSelectedAnswer('');
     setCurrent((prev) => prev + 1);
+    setTimeLeft(60);
   };
+
+  // Timer countdown effect
+  useEffect(() => {
+    if (current >= quizData.length) return;
+
+    const timerId = setInterval(() => {
+      setTimeLeft((prev) => prev - 1);
+    }, 1000);
+
+    return () => clearInterval(timerId);
+  }, [current, quizData.length]);
+
+  // Timeout effect
+  useEffect(() => {
+    if (timeLeft <= 0) {
+      handleNext(true);
+    }
+  }, [timeLeft]); // Depends on timeLeft to trigger when it hits 0
 
   // Auto submit on last question
   useEffect(() => {
@@ -51,14 +71,12 @@ const OpenQuiz = () => {
         quizNo: `Quiz No ${quizIndex + 1}`
       };
 
-
       const submitQuizData = async () => {
         try {
           const result = await submitQuiz(quizId, data);
           if (result.success) {
             toast.success(result.message);
             dispatch(setSubmittedQuizes(result.submission));
-            // dispatch(clearSubmittedQuizes())
           }
         } catch (error) {
           console.error('Submission failed', error);
@@ -69,7 +87,7 @@ const OpenQuiz = () => {
     }
   }, [current, quizData.length, userResponses.length]);
 
-  // ✅ Return if quiz is finished
+  // Return if quiz is finished
   if (current >= quizData.length) {
     return (
       <div className="bg-[#F2F3F8] min-h-screen flex items-center justify-center px-4">
@@ -98,10 +116,18 @@ const OpenQuiz = () => {
     <div className="h-full bg-[#F2F3F8] py-8 px-4 mt-18">
       <div className="max-w-4xl mx-auto bg-white rounded-2xl shadow-lg p-6 sm:p-8">
         {/* Course Info */}
-        <div className="text-center mb-6 flex justify-between">
+        <div className="text-center mb-6 flex justify-between items-center">
           <h1 className="text-sm md:text-2xl font-bold text-gray-500">Quiz No {quizIndex + 1}</h1>
           <h1 className="text-base md:text-2xl font-bold text-primary">{singleQuizData?.selectedCourse}</h1>
           <p className="text-xs md:text-sm text-gray-500">{singleQuizData?.dueDate}</p>
+        </div>
+
+        {/* Timer UI */}
+        <div className="flex justify-center mb-6">
+          <div className={`flex items-center gap-2 px-4 py-2 rounded-full font-bold text-lg transition-colors duration-300 ${timeLeft <= 10 ? 'bg-red-100 text-red-600 animate-pulse' : 'bg-blue-50 text-blue-600'}`}>
+            <Timer className="w-5 h-5" />
+            00:{timeLeft.toString().padStart(2, '0')}
+          </div>
         </div>
 
         {/* Question & Options */}
@@ -139,7 +165,7 @@ const OpenQuiz = () => {
           </div>
 
           <button
-            onClick={handleNext}
+            onClick={() => handleNext(false)}
             disabled={!selectedAnswer}
             className={`mt-6 w-full py-2 rounded-lg text-white font-semibold transition duration-200
               ${selectedAnswer
@@ -156,3 +182,4 @@ const OpenQuiz = () => {
 };
 
 export default OpenQuiz;
+

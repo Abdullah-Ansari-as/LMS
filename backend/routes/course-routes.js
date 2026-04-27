@@ -17,6 +17,7 @@ const {
   fetchSubmittedAssignments,
   fetchSubmittedAssignmentsAdmin,
   fetchSubmittedQuizes,
+  fetchSubmittedQuizesAdmin,
   deleteCourseLecture,
   fetchSingleQuiz,
   fetchAndCompareQuiz,
@@ -47,6 +48,12 @@ router.get(
   fetchSubmittedAssignmentsAdmin
 );
 router.get("/fetchSubmittedQuizes", protect, fetchSubmittedQuizes);
+router.get(
+  "/admin/fetchSubmittedQuizes",
+  protect,
+  isAdmin,
+  fetchSubmittedQuizesAdmin
+);
 router.delete("/deleteCourseLecture/:courseId/lectures/:lectureId", protect, isAdmin, deleteCourseLecture);
 router.post("/fetchSingleQuiz/:quizId", protect, fetchSingleQuiz);
 router.post("/fetchAndCompareQuiz/:quizId", protect, fetchAndCompareQuiz);
@@ -58,9 +65,81 @@ router.post(
 );
 
 
-router.get("/download", (req, res) => {
-  const fileUrl = req.query.url;
-  res.redirect(fileUrl); // ✅ redirect to Cloudinary
+const axios = require("axios");
+
+router.get("/download", async (req, res) => {
+  const { url, name } = req.query;
+  if (!url) {
+    return res.status(400).send("URL is required");
+  }
+
+  try {
+    const response = await axios.get(url, { responseType: "stream" });
+    const fileName = name || url.split("/").pop();
+
+    // Set headers
+    res.setHeader("Content-Disposition", `attachment; filename="${fileName}"`);
+    if (response.headers["content-type"]) {
+      res.setHeader("Content-Type", response.headers["content-type"]);
+    }
+    
+    response.data.pipe(res);
+  } catch (error) {
+    console.error("Download error:", error);
+    res.status(500).send("Failed to download file");
+  }
+});
+
+// Fallback route for /download/:identifier (handles old or broken links)
+router.get("/download/:identifier", async (req, res) => {
+  const { identifier } = req.params;
+  const { name } = req.query;
+
+  try {
+    const Course = require("../models/course-model");
+    const Assignment = require("../models/assignment-model");
+
+    let fileUrl = "";
+
+    // 1. Search in Course model (for lecture handouts)
+    const courseWithHandout = await Course.findOne({
+      "lectures.handout.fileUrl": { $regex: identifier },
+    });
+
+    if (courseWithHandout) {
+      courseWithHandout.lectures.forEach((l) => {
+        if (l.handout?.fileUrl?.includes(identifier))
+          fileUrl = l.handout.fileUrl;
+      });
+    }
+
+    // 2. Search in Assignment model (if not found in handouts)
+    if (!fileUrl) {
+      const assignment = await Assignment.findOne({
+        assignmentFile: { $regex: identifier },
+      });
+      if (assignment) {
+        fileUrl = assignment.assignmentFile;
+      }
+    }
+
+    if (!fileUrl) {
+      return res.status(404).send("File not found in database");
+    }
+
+    const response = await axios.get(fileUrl, { responseType: "stream" });
+    const fileName = name || fileUrl.split("/").pop();
+
+    res.setHeader("Content-Disposition", `attachment; filename="${fileName}"`);
+    if (response.headers["content-type"]) {
+      res.setHeader("Content-Type", response.headers["content-type"]);
+    }
+
+    response.data.pipe(res);
+  } catch (error) {
+    console.error("Fallback download error:", error);
+    res.status(500).send("Failed to download file via fallback");
+  }
 });
 
 module.exports = router;

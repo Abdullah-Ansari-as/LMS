@@ -21,6 +21,7 @@ const courseSchema = new mongoose.Schema(
         handout: {
           fileUrl: String,
           fileName: String,
+          handoutContent: String,
         },
       },
     ],

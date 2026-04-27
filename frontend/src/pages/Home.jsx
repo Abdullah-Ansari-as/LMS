@@ -6,7 +6,7 @@ import { FaArrowsRotate } from "react-icons/fa6";
 import { GrAnnounce } from "react-icons/gr";
 import { Link, useNavigate } from 'react-router-dom';
 import { useEffect } from 'react';
-import { getAllCourses } from '../api/courseApi';
+import { getAllCourses, fetchSubmittedAssignments, fetchSubmittedQuizes } from '../api/courseApi';
 import { setCourses } from '../redux/slices/courseSlice';
 import { useDispatch, useSelector } from 'react-redux';
 import { useState } from "react";
@@ -20,23 +20,46 @@ const Home = () => {
 	const [loading, setLoading] = useState(false);
 
 	const courseData = useSelector((store) => store.course.courses);
+	const [submittedAssignments, setSubmittedAssignments] = useState([]);
+	const [submittedQuizzes, setSubmittedQuizzes] = useState([]);
+	const [seenAnnouncements, setSeenAnnouncements] = useState(() => {
+		const saved = localStorage.getItem('seenAnnouncements');
+		return saved ? JSON.parse(saved) : {};
+	});
 
 	useEffect(() => {
-		try {
-			const fetchCourses = async () => {
-				setLoading(true)
-				const data = await getAllCourses();
-				if (data.success) {
-					dispatch(setCourses(data.allCourses));
-					setLoading(false)
+		const fetchData = async () => {
+			try {
+				setLoading(true);
+				const [courseRes, assigRes, quizRes] = await Promise.all([
+					getAllCourses(),
+					fetchSubmittedAssignments(),
+					fetchSubmittedQuizes()
+				]);
+
+				if (courseRes.success) {
+					dispatch(setCourses(courseRes.allCourses));
 				}
+				if (assigRes.success) {
+					setSubmittedAssignments(assigRes.submittedAssignments);
+				}
+				if (quizRes.success) {
+					setSubmittedQuizzes(quizRes.submittedQuizes);
+				}
+				setLoading(false);
+			} catch (error) {
+				setLoading(false);
+				console.error(error);
 			}
-			fetchCourses();
-		} catch (error) {
-			setLoading(false);
-			console.error(error);
-		}
-	}, []);
+		};
+		fetchData();
+	}, [dispatch]);
+
+	const markAnnouncementsAsSeen = (courseId, announcementIds) => {
+		const updated = { ...seenAnnouncements, [courseId]: announcementIds };
+		setSeenAnnouncements(updated);
+		localStorage.setItem('seenAnnouncements', JSON.stringify(updated));
+	};
 
 	if(loading) {
 		return <div className="flex-1 flex items-center justify-center bg-[#F2F3F8] h-full py-8 px-7">
@@ -88,9 +111,16 @@ const Home = () => {
 									<div className='flex flex-col items-center justify-center relative'>
 										<Link to={`/course/${data._id}/assignment`} className='relative'>
 											<BiBookReader className='w-9 h-9 hover:text-gray-400 duration-400 transition-transform hover:scale-120 cursor-pointer' />
-											{
-												data.assignments.length > 0 && <span className='absolute -top-1 -right-3 w-4 h-4 bg-red-500 rounded-full text-white text-[10px] flex items-center justify-center'>{data.assignments.length}</span>
-											}
+											{(() => {
+												const unsubmittedCount = data.assignments.filter(
+													(a) => !submittedAssignments.some((s) => s.assignmentId === a || s.assignmentId?._id === a)
+												).length;
+												return unsubmittedCount > 0 ? (
+													<span className='absolute -top-1 -right-3 w-4 h-4 bg-red-500 rounded-full text-white text-[10px] flex items-center justify-center'>
+														{unsubmittedCount}
+													</span>
+												) : null;
+											})()}
 										</Link>
 										<p className='text-[11px] text-black mt-1'>Assignments</p>
 									</div>
@@ -103,9 +133,16 @@ const Home = () => {
 									<div className='flex flex-col items-center justify-center relative'>
 										<Link to={`/course/${data._id}/quiz`} className="relative">
 											<TbClockQuestion className='w-9 h-9 hover:text-gray-400 duration-400 transition-transform hover:scale-120 cursor-pointer' /> 
-											{
-												data.quizzes.length > 0 && <span className='absolute -top-1 -right-3 w-4 h-4 bg-red-500 rounded-full text-white text-[10px] flex items-center justify-center'>{data.quizzes.length}</span>
-											}					
+											{(() => {
+												const unsubmittedCount = data.quizzes.filter(
+													(q) => !submittedQuizzes.some((s) => s.quizId === q || s.quizId?._id === q)
+												).length;
+												return unsubmittedCount > 0 ? (
+													<span className='absolute -top-1 -right-3 w-4 h-4 bg-red-500 rounded-full text-white text-[10px] flex items-center justify-center'>
+														{unsubmittedCount}
+													</span>
+												) : null;
+											})()}					
 										</Link>
 										<p className='text-[11px] text-black mt-1'>Quiz</p>
 									</div>
@@ -116,11 +153,21 @@ const Home = () => {
 									</div>
 
 									<div className='flex flex-col items-center justify-center relative'>
-										<Link to={`/course/${data._id}/announcement`} className="relative">
+										<Link 
+											to={`/course/${data._id}/announcement`} 
+											className="relative"
+											onClick={() => markAnnouncementsAsSeen(data._id, data.announcements)}
+										>
 											<GrAnnounce className='w-9 h-9 hover:text-gray-400 duration-400 transition-transform hover:scale-120 cursor-pointer' />
-											{
-												data.announcements.length > 0 && <span className='absolute -top-1 -right-3 w-4 h-4 bg-red-500 rounded-full text-white text-[10px] flex items-center justify-center'>{data.announcements.length}</span>
-											}
+											{(() => {
+												const seenIds = seenAnnouncements[data._id] || [];
+												const newAnnouncements = data.announcements.filter(id => !seenIds.includes(id));
+												return newAnnouncements.length > 0 ? (
+													<span className='absolute -top-1 -right-3 w-4 h-4 bg-red-500 rounded-full text-white text-[10px] flex items-center justify-center'>
+														{newAnnouncements.length}
+													</span>
+												) : null;
+											})()}
 										</Link>
 										<p className='text-[11px] text-black mt-1'>Announcements</p>
 									</div>

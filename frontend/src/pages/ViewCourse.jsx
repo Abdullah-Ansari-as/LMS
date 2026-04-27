@@ -46,6 +46,7 @@ const ViewCourse = () => {
   const [comments, setComments] = useState([]);
   const [selectLecture, setSelectLecture] = useState(null);
   const [selectedHandoutLecture, setSelectedHandoutLecture] = useState(null);
+  const [handoutText, setHandoutText] = useState("");
 
   const allCourses = useSelector((store) => store.course.courses);
   const course = allCourses?.find((c) => c._id === paramId);
@@ -259,11 +260,19 @@ const ViewCourse = () => {
       return "image";
     }
 
-    if (["pdf", "txt", "md"].includes(extension)) {
+    if (["pdf"].includes(extension)) {
       return "iframe";
     }
 
-    if (["doc", "docx", "ppt", "pptx", "xls", "xlsx"].includes(extension)) {
+    if (["txt", "md"].includes(extension)) {
+      return "text";
+    }
+
+    if (["docx"].includes(extension)) {
+      return "docx";
+    }
+
+    if (["doc", "ppt", "pptx", "xls", "xlsx"].includes(extension)) {
       return "office";
     }
 
@@ -282,6 +291,52 @@ const ViewCourse = () => {
 
     return fileUrl;
   };
+
+  useEffect(() => {
+    if (selectedHandoutLecture) {
+      if (selectedHandoutLecture.handout?.handoutContent) {
+        setHandoutText(selectedHandoutLecture.handout.handoutContent);
+        return;
+      }
+
+      const type = getHandoutPreviewType(selectedHandoutLecture);
+      if (type === "text") {
+        fetch(selectedHandoutLecture.handout.fileUrl)
+          .then((res) => res.text())
+          .then((text) => setHandoutText(text))
+          .catch((err) => {
+            console.error("Failed to fetch handout text:", err);
+            setHandoutText("Error loading handout text.");
+          });
+      } else if (type === "docx") {
+        fetch(selectedHandoutLecture.handout.fileUrl)
+          .then((res) => res.arrayBuffer())
+          .then((arrayBuffer) => {
+            if (window.mammoth) {
+              window.mammoth
+                .convertToHtml({ arrayBuffer: arrayBuffer })
+                .then((result) => {
+                  setHandoutText(result.value);
+                })
+                .catch((err) => {
+                  console.error("Mammoth error:", err);
+                  setHandoutText("Error converting .docx file.");
+                });
+            } else {
+              setHandoutText("Document parser not loaded. Please try again.");
+            }
+          })
+          .catch((err) => {
+            console.error("Failed to fetch .docx handout:", err);
+            setHandoutText("Error loading .docx handout.");
+          });
+      } else {
+        setHandoutText("");
+      }
+    } else {
+      setHandoutText("");
+    }
+  }, [selectedHandoutLecture]);
 
   return (
     <div className="min-h-screen bg-[#F2F3F8] py-8 px-2 md:px-8 mt-18">
@@ -409,7 +464,7 @@ const ViewCourse = () => {
                       <span
                         onClick={() => openHandoutModal(lecture)}
                         className={`flex items-center text-xs px-2 py-1 rounded-md ${
-                          lecture?.handout?.fileUrl
+                          lecture?.handout?.fileUrl || lecture?.handout?.handoutContent
                             ? "cursor-pointer text-gray-600 bg-blue-50"
                             : "cursor-not-allowed text-gray-400 bg-gray-100"
                         }`}
@@ -611,11 +666,28 @@ const ViewCourse = () => {
                     className="max-h-full max-w-full object-contain"
                   />
                 </div>
+              ) : getHandoutPreviewType(selectedHandoutLecture) === "text" ? (
+                <div className="h-full w-full rounded-xl border border-gray-200 bg-white p-4 overflow-auto">
+                  <pre className="whitespace-pre-wrap font-sans text-sm text-gray-800">
+                    {handoutText || "Loading handout content..."}
+                  </pre>
+                </div>
+              ) : getHandoutPreviewType(selectedHandoutLecture) === "docx" ? (
+                <div className="h-full w-full rounded-xl border border-gray-200 bg-white p-6 overflow-auto">
+                  <div
+                    className="prose prose-sm max-w-none text-gray-800"
+                    dangerouslySetInnerHTML={{
+                      __html: handoutText || "Loading document...",
+                    }}
+                  />
+                </div>
               ) : getHandoutPreviewType(selectedHandoutLecture) === "iframe" ||
                 getHandoutPreviewType(selectedHandoutLecture) === "office" ? (
                 <iframe
                   src={getHandoutPreviewUrl(selectedHandoutLecture)}
-                  title={selectedHandoutLecture.handout?.fileName || "Lecture handout"}
+                  title={
+                    selectedHandoutLecture.handout?.fileName || "Lecture handout"
+                  }
                   className="h-full w-full rounded-xl border border-gray-200 bg-white"
                 />
               ) : (
@@ -632,13 +704,12 @@ const ViewCourse = () => {
             </div>
 
             <div className="flex justify-end gap-3 border-t bg-white px-6 py-4">
-              <a
-                href={selectedHandoutLecture.handout?.fileUrl}
-                target="_blank"
-                rel="noreferrer"
+               <a
+                href={`${import.meta.env.VITE_BACKEND_URL}/api/courses/download?url=${encodeURIComponent(selectedHandoutLecture.handout?.fileUrl)}&name=${encodeURIComponent(selectedHandoutLecture.handout?.fileName || "handout")}`}
+                download={selectedHandoutLecture.handout?.fileName || "handout"}
                 className="rounded-lg bg-blue-600 px-4 py-2 text-sm font-medium text-white transition hover:bg-blue-700"
               >
-                Open In New Tab
+                Download Handout
               </a>
               <button
                 onClick={closeHandoutModal}

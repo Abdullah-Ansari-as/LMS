@@ -54,6 +54,36 @@ export const changePassword = async (data) => {
 	}
 }
 
+export const forgotPassword = async (data) => {
+	try {
+		const res = await axios.post(`${import.meta.env.VITE_BACKEND_URL}/api/users/forgotPassword`, data);
+		return res.data;
+	} catch (error) {
+		console.log(error);
+		throw error
+	}
+}
+
+export const verifyOTP = async (data) => {
+	try {
+		const res = await axios.post(`${import.meta.env.VITE_BACKEND_URL}/api/users/verifyOTP`, data);
+		return res.data;
+	} catch (error) {
+		console.log(error);
+		throw error
+	}
+}
+
+export const resetPassword = async (data) => {
+	try {
+		const res = await axios.post(`${import.meta.env.VITE_BACKEND_URL}/api/users/resetPassword`, data);
+		return res.data;
+	} catch (error) {
+		console.log(error);
+		throw error
+	}
+}
+
 
 // Admin Api's
 export const getAllStudents = async () => {

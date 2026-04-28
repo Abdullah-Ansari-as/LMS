@@ -27,12 +27,11 @@ const UserLayout = () => {
 
   const sidebarClasses = useMemo(() => {
     const baseClasses = [
-      "bg-[#2C2E3E]",
-      "text-white",
+      "bg-[#0f172a]",
       "h-screen",
       "fixed",
       "lg:static",
-      "z-50", // Changed from z-100 (100 doesn't exist in standard Tailwind)
+      "z-50",
       "transform",
       "transition-transform",
       "duration-300",
@@ -40,10 +39,8 @@ const UserLayout = () => {
     ];
 
     const widthClasses = [
-      "w-[70%]",
-      "sm:w-[40%]",
-      "md:w-[30%]",
-      "lg:w-[19%]",
+      "w-[280px]",
+      "lg:w-[280px]",
       "lg:flex",
     ];
 
@@ -54,11 +51,10 @@ const UserLayout = () => {
     return [...baseClasses, ...widthClasses, visibilityClasses].join(" ");
   }, [effectiveSidebarOpen]);
 
-  // Memoize overlay condition
   const showOverlay = effectiveSidebarOpen;
 
   return (
-    <div className="flex h-screen">
+    <div className="flex h-screen bg-[#f8fafc]">
       {/* Left Sidebar */}
       <aside className={sidebarClasses}>
         <LeftSidebar toggleSidebar={handleToggleSidebar} />
@@ -67,7 +63,7 @@ const UserLayout = () => {
       {/* Overlay for mobile when sidebar is open */}
       {showOverlay && (
         <div
-          className="fixed inset-0 bg-black opacity-30 z-40 lg:hidden cursor-pointer"
+          className="fixed inset-0 bg-slate-900/40 backdrop-blur-sm z-40 lg:hidden cursor-pointer"
           onClick={handleCloseSidebar}
           aria-hidden="true"
         />
@@ -81,8 +77,8 @@ const UserLayout = () => {
           sidebarOpen={effectiveSidebarOpen}
         />
 
-        {/* Main Layout */}
-        <main className="flex-1 overflow-y-auto bg-[#F2F3F8]">
+        {/* Main Content Area */}
+        <main className="flex-1 overflow-y-auto">
           <Outlet />
         </main>
       </div>

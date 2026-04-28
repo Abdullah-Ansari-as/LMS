@@ -1,10 +1,10 @@
-import { Loader2 } from "lucide-react";
+import { Loader2, TrendingUp, CheckCircle2, XCircle, ChevronRight } from "lucide-react";
 import React, { useEffect, useState } from "react";
 import { useSelector } from "react-redux";
 import { getProgress } from "../api/progressApi";
+import { motion, AnimatePresence } from "framer-motion";
 
 const Progress = () => {
-
   const allCourses = useSelector((store) => store.course.courses);
   const [currentId, setCurrentId] = useState(allCourses[0]?._id);
   const [loading, setLoading] = useState(false);
@@ -17,6 +17,7 @@ const Progress = () => {
   };
 
   useEffect(() => {
+    if (!courseName) return;
     const fetchAndSetProgress = async () => {
       try {
         setLoading(true);
@@ -35,106 +36,175 @@ const Progress = () => {
   }, [courseName]);
 
   return (
-    <div className="mt-18 bg-[#F2F3F8] h-auto md:h-full py-8 px-2 md:px-7">
-      <div className="flex items-center px-6 py-3 md:py-6">
-        <h2 className='text-2xl mx-auto md:mx-0'>Progress Status</h2>
-      </div>
-
-      <div className="grid bg-white grid-cols-1 sm:grid-cols-4 gap-2 shadow">
-        {
-          allCourses.map((course) => (
-            <div key={course._id} className="cursor-pointer">
-              <div
-                onClick={() => handleClick(course._id, course.courseName)}
-                className={`${course._id === currentId ? "bg-[#7e79c9] text-white" : ""} text-center border rounded border-gray-300 p-2`}
-              >
-                {course.courseName}
-              </div>
-            </div>
-          ))
-        }
-      </div>
-
-      <div className="border border-gray-200 p-1.5 md:p-3 bg-white mt-1 rounded-md">
-        <div className="flex items-center mb-4">
-          <span className="text-xl font-semibold">Graded Activities</span>
-        </div>
-        <div className="border-b border-gray-300 mb-4"></div>
-
-        {loading ? (
-          <div className="flex justify-center items-center p-5">
-            <Loader2 className="h-8 w-8 animate-spin" />
+    <div className="mt-20 bg-[#f8fafc] min-h-screen py-10 px-4 md:px-8 lg:px-12">
+      {/* Header Section */}
+      <motion.div 
+        initial={{ opacity: 0, y: -10 }}
+        animate={{ opacity: 1, y: 0 }}
+        className="flex flex-col md:flex-row md:items-center justify-between mb-8 gap-4"
+      >
+        <div className="flex items-center gap-3">
+          <div className="p-3 bg-indigo-600 rounded-2xl shadow-lg shadow-indigo-100">
+            <TrendingUp className="w-6 h-6 text-white" />
           </div>
-        ) : (
-          <div className="flex flex-col md:flex-row text-center gap-4">
+          <div>
+            <h2 className="text-3xl font-black text-slate-900 tracking-tight">Progress Status</h2>
+            <p className="text-slate-500 text-sm font-medium mt-1">Track your academic milestones</p>
+          </div>
+        </div>
+      </motion.div>
 
-            {/* Assignments */}
-            <div className="md:w-1/2 border-gray-300 md:border-r">
-              <p className="font-semibold">Assignments</p>
-              <div className="text-start mx-2 md:mx-3 mt-5">
-                <ol className="list-decimal list-inside space-y-3 text-gray-800">
+      {/* Course Selection Tabs */}
+      <div className="mb-8 overflow-x-auto custom-scrollbar pb-2">
+        <div className="flex gap-2 min-w-max">
+          {allCourses.map((course) => (
+            <motion.button
+              key={course._id}
+              whileHover={{ y: -2 }}
+              whileTap={{ scale: 0.98 }}
+              onClick={() => handleClick(course._id, course.courseName)}
+              className={`
+                px-6 py-3 rounded-2xl font-bold text-sm transition-all border
+                ${course._id === currentId 
+                  ? "bg-indigo-600 text-white border-indigo-600 shadow-lg shadow-indigo-100" 
+                  : "bg-white text-slate-600 border-slate-200 hover:border-indigo-200 hover:text-indigo-600 shadow-sm"}
+              `}
+            >
+              {course.courseName}
+            </motion.button>
+          ))}
+        </div>
+      </div>
+
+      {/* Progress Content */}
+      <motion.div 
+        initial={{ opacity: 0, scale: 0.98 }}
+        animate={{ opacity: 1, scale: 1 }}
+        className="bg-white rounded-3xl border border-slate-200/60 shadow-sm overflow-hidden"
+      >
+        <div className="px-8 py-6 border-b border-slate-100 flex items-center justify-between bg-slate-50/50">
+          <h3 className="text-xl font-black text-slate-900 tracking-tight flex items-center gap-2">
+            Graded Activities
+            <span className="text-xs font-bold text-indigo-600 bg-indigo-50 px-2 py-1 rounded-lg border border-indigo-100">
+              {courseName}
+            </span>
+          </h3>
+          <div className="flex items-center gap-4 text-[11px] font-bold uppercase tracking-wider text-slate-400">
+            <div className="flex items-center gap-1.5"><div className="w-2 h-2 rounded-full bg-green-500"></div> Submitted</div>
+            <div className="flex items-center gap-1.5"><div className="w-2 h-2 rounded-full bg-red-500"></div> Pending</div>
+          </div>
+        </div>
+
+        <AnimatePresence mode="wait">
+          {loading ? (
+            <motion.div 
+              key="loading"
+              initial={{ opacity: 0 }}
+              animate={{ opacity: 1 }}
+              exit={{ opacity: 0 }}
+              className="flex flex-col items-center justify-center p-20 gap-4"
+            >
+              <Loader2 className="h-10 w-10 animate-spin text-indigo-600" />
+              <p className="text-slate-400 font-bold text-sm tracking-wide uppercase">Syncing records...</p>
+            </motion.div>
+          ) : (
+            <motion.div 
+              key="content"
+              initial={{ opacity: 0 }}
+              animate={{ opacity: 1 }}
+              className="p-8 grid grid-cols-1 lg:grid-cols-2 gap-10"
+            >
+              {/* Assignments Section */}
+              <div className="space-y-6">
+                <div className="flex items-center gap-2 px-2">
+                  <h4 className="text-lg font-black text-slate-900 tracking-tight uppercase">Assignments</h4>
+                  <div className="h-0.5 flex-1 bg-slate-100 rounded-full"></div>
+                </div>
+                
+                <div className="space-y-3">
                   {progressData?.assignments?.length > 0 ? (
                     progressData.assignments.map((ass, index) => (
-                      <li
+                      <motion.div
                         key={ass._id}
-                        className="flex justify-between items-center bg-white shadow-sm p-3 rounded-md border border-gray-200"
+                        initial={{ opacity: 0, x: -10 }}
+                        animate={{ opacity: 1, x: 0 }}
+                        transition={{ delay: index * 0.05 }}
+                        className="flex justify-between items-center bg-white hover:bg-slate-50 p-4 rounded-2xl border border-slate-200 transition-all group"
                       >
-                        <span className="text-sm md:text-base md:font-medium">Assignment {index + 1}</span>
+                        <div className="flex items-center gap-3">
+                          <div className={`p-2 rounded-xl ${ass.submit ? "bg-green-50 text-green-600" : "bg-red-50 text-red-600"}`}>
+                            {ass.submit ? <CheckCircle2 className="w-5 h-5" /> : <XCircle className="w-5 h-5" />}
+                          </div>
+                          <div>
+                            <span className="text-sm font-black text-slate-900 leading-none">Assignment {index + 1}</span>
+                            <p className="text-[11px] font-medium text-slate-400 mt-1 uppercase">Course Requirement</p>
+                          </div>
+                        </div>
                         <span
-                          className={`text-xs md:text-sm font-semibold p-1.5 md:px-3 py-1 rounded-full ${ass.submit
-                            ? "bg-green-100 text-green-600"
-                            : "bg-red-100 text-red-600"
+                          className={`text-[10px] font-black uppercase tracking-widest px-3 py-1.5 rounded-xl border-2 ${ass.submit
+                            ? "bg-green-50/50 text-green-600 border-green-100"
+                            : "bg-red-50/50 text-red-600 border-red-100"
                             }`}
                         >
-                          {ass.submit ? "Submitted" : "Not Submitted"}
+                          {ass.submit ? "Complete" : "Action Needed"}
                         </span>
-                      </li>
+                      </motion.div>
                     ))
                   ) : (
-                    <div className="flex items-center justify-center">
-                      <p className="text-red-500">No Status Found!</p>
+                    <div className="flex flex-col items-center justify-center p-10 bg-slate-50 rounded-3xl border border-dashed border-slate-200">
+                      <p className="text-slate-400 font-bold text-sm uppercase tracking-widest">No Assignments Yet</p>
                     </div>
                   )}
-                </ol>
+                </div>
               </div>
-            </div>
 
-            {/* Quizzes */}
-            <div className="md:w-1/2">
-              <p className="font-semibold">Quizzes</p>
-              <div className="text-start mx-2 md:mx-3 mt-5">
-                <ol className="list-decimal list-inside space-y-3 text-gray-800">
+              {/* Quizzes Section */}
+              <div className="space-y-6">
+                <div className="flex items-center gap-2 px-2">
+                  <h4 className="text-lg font-black text-slate-900 tracking-tight uppercase">Quizzes</h4>
+                  <div className="h-0.5 flex-1 bg-slate-100 rounded-full"></div>
+                </div>
+
+                <div className="space-y-3">
                   {progressData?.quizzes?.length > 0 ? (
                     progressData.quizzes.map((quiz, index) => (
-                      <li
+                      <motion.div
                         key={quiz._id}
-                        className="flex justify-between items-center bg-white shadow-sm p-3 rounded-md border border-gray-200"
+                        initial={{ opacity: 0, x: 10 }}
+                        animate={{ opacity: 1, x: 0 }}
+                        transition={{ delay: index * 0.05 }}
+                        className="flex justify-between items-center bg-white hover:bg-slate-50 p-4 rounded-2xl border border-slate-200 transition-all group"
                       >
-                        <span className="text-sm md:text-base md:font-medium">Quiz {index + 1}</span>
+                        <div className="flex items-center gap-3">
+                          <div className={`p-2 rounded-xl ${quiz.submit ? "bg-green-50 text-green-600" : "bg-red-50 text-red-600"}`}>
+                            {quiz.submit ? <CheckCircle2 className="w-5 h-5" /> : <XCircle className="w-5 h-5" />}
+                          </div>
+                          <div>
+                            <span className="text-sm font-black text-slate-900 leading-none">Quiz {index + 1}</span>
+                            <p className="text-[11px] font-medium text-slate-400 mt-1 uppercase">Assessment Item</p>
+                          </div>
+                        </div>
                         <span
-                          className={`text-xs md:text-sm font-semibold p-1.5 md:px-3 py-1 rounded-full ${quiz.submit
-                            ? "bg-green-100 text-green-600"
-                            : "bg-red-100 text-red-600"
+                          className={`text-[10px] font-black uppercase tracking-widest px-3 py-1.5 rounded-xl border-2 ${quiz.submit
+                            ? "bg-green-50/50 text-green-600 border-green-100"
+                            : "bg-red-50/50 text-red-600 border-red-100"
                             }`}
                         >
-                          {quiz.submit ? "Submitted" : "Not Submitted"}
+                          {quiz.submit ? "Complete" : "Action Needed"}
                         </span>
-                      </li>
+                      </motion.div>
                     ))
                   ) : (
-                    <div className="flex items-center justify-center">
-                      <p className="text-red-500">No Status Found!</p>
+                    <div className="flex flex-col items-center justify-center p-10 bg-slate-50 rounded-3xl border border-dashed border-slate-200">
+                      <p className="text-slate-400 font-bold text-sm uppercase tracking-widest">No Quizzes Yet</p>
                     </div>
                   )}
-                </ol>
+                </div>
               </div>
-            </div>
-          </div>
-        )}
-      </div>
-
-
-
+            </motion.div>
+          )}
+        </AnimatePresence>
+      </motion.div>
     </div>
   );
 };

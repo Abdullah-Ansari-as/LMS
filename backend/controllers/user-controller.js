@@ -3,6 +3,8 @@ const Grade = require("../models/grades-model.js");
 const jwt = require("jsonwebtoken");
 const bcrypt = require("bcryptjs");
 const cloudinary = require("../config/cloudinary.js")
+const sendEmail = require("../utils/sendEmail.js");
+const crypto = require("crypto");
 
 const register = async (req, res) => {
 	const { name, email, password } = req.body;
@@ -253,6 +255,105 @@ const getTopPerformingStudents = async (_, res) => {
 	}
 };
 
+const forgotPassword = async (req, res) => {
+	const { email } = req.body;
+	try {
+		const user = await User.findOne({ email });
+		if (!user) {
+			return res.status(404).json({ message: "User with this email does not exist!", success: false });
+		}
+
+		// Generate 6-digit OTP
+		const otp = Math.floor(100000 + Math.random() * 900000).toString();
+		user.resetPasswordOTP = otp;
+		user.resetPasswordExpires = Date.now() + 10 * 60 * 1000; // 10 minutes
+
+		await user.save();
+
+		const message = `Your 6-digit OTP for password reset is: ${otp}. It is valid for 10 minutes.`;
+
+		try {
+			await sendEmail({
+				email: user.email,
+				subject: "LMS Password Reset OTP",
+				message,
+				html: `
+					<div style="font-family: sans-serif; padding: 20px; border: 1px solid #eee; border-radius: 10px;">
+						<h2 style="color: #4f46e5;">Password Reset OTP</h2>
+						<p>Hello ${user.name},</p>
+						<p>You requested a password reset. Use the following 6-digit OTP to authenticate:</p>
+						<div style="font-size: 32px; font-weight: bold; color: #4f46e5; letter-spacing: 5px; margin: 20px 0;">${otp}</div>
+						<p>This OTP is valid for 10 minutes. If you did not request this, please ignore this email.</p>
+						<hr style="border: none; border-top: 1px solid #eee; margin-top: 20px;" />
+						<p style="font-size: 12px; color: #666;">Learning Management System</p>
+					</div>
+				`
+			});
+
+			res.status(200).json({ message: "OTP sent to your email!", success: true });
+		} catch (error) {
+			user.resetPasswordOTP = undefined;
+			user.resetPasswordExpires = undefined;
+			await user.save();
+			console.error("Email error:", error);
+			return res.status(500).json({ message: "Failed to send email. Please try again later.", success: false });
+		}
+
+	} catch (error) {
+		console.error(error);
+		res.status(500).json({ message: "Internal server error", success: false });
+	}
+};
+
+const verifyOTP = async (req, res) => {
+	const { email, otp } = req.body;
+	try {
+		const user = await User.findOne({ 
+			email, 
+			resetPasswordOTP: otp,
+			resetPasswordExpires: { $gt: Date.now() }
+		});
+
+		if (!user) {
+			return res.status(400).json({ message: "Invalid or expired OTP!", success: false });
+		}
+
+		res.status(200).json({ message: "OTP verified successfully!", success: true });
+
+	} catch (error) {
+		console.error(error);
+		res.status(500).json({ message: "Internal server error", success: false });
+	}
+};
+
+const resetPassword = async (req, res) => {
+	const { email, otp, newPassword } = req.body;
+	try {
+		const user = await User.findOne({ 
+			email, 
+			resetPasswordOTP: otp,
+			resetPasswordExpires: { $gt: Date.now() }
+		});
+
+		if (!user) {
+			return res.status(400).json({ message: "Invalid or expired OTP session!", success: false });
+		}
+
+		const hashedPassword = await bcrypt.hash(newPassword, 10);
+		user.password = hashedPassword;
+		user.resetPasswordOTP = undefined;
+		user.resetPasswordExpires = undefined;
+
+		await user.save();
+
+		res.status(200).json({ message: "Password reset successfully! You can now login.", success: true });
+
+	} catch (error) {
+		console.error(error);
+		res.status(500).json({ message: "Internal server error", success: false });
+	}
+};
+
 module.exports = {
 	register,
 	login,
@@ -261,5 +362,8 @@ module.exports = {
 	getLoginHistory,
 	changePassword,
 	uploadProfilePicture,
-	getTopPerformingStudents
+	getTopPerformingStudents,
+	forgotPassword,
+	verifyOTP,
+	resetPassword
 }

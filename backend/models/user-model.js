@@ -29,6 +29,12 @@ const userSchema = new mongoose.Schema({
 	loginHistory: {
 		type: [Date], 
 		default: Date.now,
+	},
+	resetPasswordOTP: {
+		type: String,
+	},
+	resetPasswordExpires: {
+		type: Date,
 	}
 }, { timestamps: true });
 

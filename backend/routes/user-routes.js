@@ -7,7 +7,10 @@ const {
 	getLoginHistory,
 	changePassword,
 	getTopPerformingStudents,
-	uploadProfilePicture
+	uploadProfilePicture,
+	forgotPassword,
+	verifyOTP,
+	resetPassword
 } = require('../controllers/user-controller');
 const { isAdmin } = require("../middlewares/admin-mid.js");
 const { protect } = require('../middlewares/auth-mid.js');
@@ -20,6 +23,9 @@ router.post("/logout", logout);
 router.get("/getAllStudents", protect, isAdmin, getAllStudents);
 router.get("/getLoginHistory", protect, getLoginHistory);
 router.post("/changePassword", changePassword);
+router.post("/forgotPassword", forgotPassword);
+router.post("/verifyOTP", verifyOTP);
+router.post("/resetPassword", resetPassword);
 router.post("/uploadProfilePicture", protect, uploadProfilePicture);
 router.get("/getTopPerformingStudents", protect, isAdmin, getTopPerformingStudents);
 

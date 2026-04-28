@@ -1,16 +1,25 @@
 import React, { useEffect, useState } from "react";
 import { Elements } from "@stripe/react-stripe-js";
-import {
-  FaCcStripe,
-  FaCheckCircle,
-  FaTimesCircle,
-  FaClock,
-} from "react-icons/fa";
 import { useSelector } from "react-redux";
 import { getPayment } from "../api/paymentApi";
-import { Loader2, RefreshCw } from "lucide-react";
+import { 
+  Loader2, 
+  RefreshCw, 
+  CreditCard, 
+  CheckCircle2, 
+  AlertCircle, 
+  Clock, 
+  Calendar, 
+  Info, 
+  User,
+  ArrowUpRight,
+  TrendingUp,
+  History,
+  X
+} from "lucide-react";
 import { CheckoutForm } from "../components/CheckoutForm";
 import { stripePromise } from "../stripe";
+import { motion, AnimatePresence } from "framer-motion";
 
 const AccountBook = () => {
   const { user } = useSelector((store) => store.user);
@@ -35,10 +44,7 @@ const AccountBook = () => {
         if (response.summary) {
           setSummary(response.summary);
         }
-
-        console.log("Fetched transactions:", fetchedTransactions);
       } else {
-        console.error("Failed to fetch payments:", response.message);
         setTransactions([]);
         setSummary({
           totalTransactions: 0,
@@ -50,12 +56,6 @@ const AccountBook = () => {
     } catch (error) {
       console.error("Error in fetchPayments:", error);
       setTransactions([]);
-      setSummary({
-        totalTransactions: 0,
-        totalAmount: 0,
-        paidAmount: 0,
-        pendingAmount: 0,
-      });
     } finally {
       setLoading(false);
     }
@@ -73,7 +73,6 @@ const AccountBook = () => {
       style: "currency",
       currency: "PKR",
       minimumFractionDigits: 0,
-      maximumFractionDigits: 2,
     }).format(amount);
   };
 
@@ -81,48 +80,44 @@ const AccountBook = () => {
     fetchPayments();
   }, []);
 
-  // Helper function to get status icon and styling
+  // Helper function to get status display
   const getStatusDisplay = (transaction) => {
-    if (transaction.statusDisplay) {
-      return transaction.statusDisplay;
-    }
-
     const status = transaction.paymentStatus || "pending";
     switch (status) {
       case "succeeded":
         return {
           text: "Paid",
-          color: "#10b981",
-          bgColor: "bg-green-100",
-          textColor: "text-green-800",
-          icon: <FaCheckCircle className="h-5 w-5 text-green-600" />,
+          bgColor: "bg-green-50",
+          textColor: "text-green-600",
+          borderColor: "border-green-100",
+          icon: <CheckCircle2 className="h-4 w-4" />,
           isActionable: false,
         };
       case "failed":
         return {
           text: "Failed",
-          color: "#ef4444",
-          bgColor: "bg-red-100",
-          textColor: "text-red-800",
-          icon: <FaTimesCircle className="h-5 w-5 text-red-600" />,
+          bgColor: "bg-red-50",
+          textColor: "text-red-600",
+          borderColor: "border-red-100",
+          icon: <AlertCircle className="h-4 w-4" />,
           isActionable: true,
         };
       case "processing":
         return {
           text: "Processing",
-          color: "#3b82f6",
-          bgColor: "bg-blue-100",
-          textColor: "text-blue-800",
-          icon: <RefreshCw className="h-4 w-4 animate-spin text-blue-600" />,
+          bgColor: "bg-blue-50",
+          textColor: "text-blue-600",
+          borderColor: "border-blue-100",
+          icon: <RefreshCw className="h-4 w-4 animate-spin" />,
           isActionable: false,
         };
       default:
         return {
           text: "Pending",
-          color: "#f59e0b",
-          bgColor: "bg-amber-100",
-          textColor: "text-amber-800",
-          icon: <FaClock className="h-5 w-5 text-amber-600" />,
+          bgColor: "bg-amber-50",
+          textColor: "text-amber-600",
+          borderColor: "border-amber-100",
+          icon: <Clock className="h-4 w-4" />,
           isActionable: true,
         };
     }
@@ -130,261 +125,255 @@ const AccountBook = () => {
 
   if (loading) {
     return (
-      <div className="flex-1 flex items-center justify-center bg-[#F2F3F8] h-full py-8 px-7">
-        <Loader2 className="h-10 w-10 animate-spin" />
+      <div className="flex-1 flex items-center justify-center bg-[#f8fafc] h-full min-h-[80vh]">
+        <motion.div 
+          initial={{ opacity: 0 }}
+          animate={{ opacity: 1 }}
+          className="flex flex-col items-center gap-4"
+        >
+          <Loader2 className="h-10 w-10 animate-spin text-indigo-600"/>
+          <span className="text-slate-500 font-medium animate-pulse">Accessing financial records...</span>
+        </motion.div>
       </div>
     );
   }
 
   return (
-    <div className="mt-18 bg-[#F2F3F8] h-auto md:h-full py-8 px-2 md:px-7">
-      {refreshing && (
-        <div className="fixed top-4 right-4 bg-blue-500 text-white px-4 py-2 rounded-lg shadow-lg z-50 flex items-center gap-2">
-          <Loader2 className="h-4 w-4 animate-spin" />
-          Updating payments...
+    <div className="mt-20 bg-[#f8fafc] min-h-screen py-10 px-4 md:px-8 lg:px-12 font-sans">
+      <AnimatePresence>
+        {refreshing && (
+          <motion.div 
+            initial={{ opacity: 0, y: -20 }}
+            animate={{ opacity: 1, y: 0 }}
+            exit={{ opacity: 0, y: -20 }}
+            className="fixed top-24 right-8 bg-indigo-600 text-white px-6 py-3 rounded-2xl shadow-xl z-50 flex items-center gap-3 font-bold text-sm border border-indigo-400"
+          >
+            <Loader2 className="h-4 w-4 animate-spin" />
+            Updating Ledger...
+          </motion.div>
+        )}
+      </AnimatePresence>
+
+      <motion.div 
+        initial={{ opacity: 0, y: -10 }}
+        animate={{ opacity: 1, y: 0 }}
+        className="flex flex-col md:flex-row md:items-center justify-between mb-10 gap-4"
+      >
+        <div className="flex items-center gap-3">
+          <div className="p-3 bg-indigo-600 rounded-2xl shadow-lg shadow-indigo-100">
+            <CreditCard className="w-6 h-6 text-white" />
+          </div>
+          <div>
+            <h2 className="text-3xl font-black text-slate-900 tracking-tight">Account Book</h2>
+            <p className="text-slate-500 text-sm font-medium mt-1">Manage your semester dues and payments</p>
+          </div>
         </div>
-      )}
 
-      <h1 className="text-2xl flex md:block items-center justify-center text-gray-800 mb-6">
-        My Account Book
-      </h1>
+        <div className="flex items-center gap-2 bg-white px-4 py-2 rounded-2xl border border-slate-200 shadow-sm">
+          <div className="h-8 w-8 rounded-full bg-slate-100 flex items-center justify-center">
+            <User className="w-4 h-4 text-slate-500" />
+          </div>
+          <div className="flex flex-col">
+            <span className="text-[10px] font-black text-slate-400 uppercase tracking-widest leading-none">Student</span>
+            <span className="text-xs font-bold text-slate-900 mt-1">{user.name}</span>
+          </div>
+        </div>
+      </motion.div>
 
-      {/* Summary Statistics Card */}
+      {/* Summary Statistics Card - Modern Design */}
       {summary && (
-        <div className="bg-white rounded-lg shadow-md p-6 mb-8 grid grid-cols-1 md:grid-cols-4 gap-4">
-          <div className="text-center p-4 bg-blue-50 rounded-lg">
-            <p className="text-sm text-gray-600 mb-1">Total Transactions</p>
-            <p className="text-2xl font-bold text-blue-700">
-              {summary.totalTransactions}
-            </p>
-          </div>
-          <div className="text-center p-4 bg-green-50 rounded-lg">
-            <p className="text-sm text-gray-600 mb-1">Total Amount</p>
-            <p className="text-2xl font-bold text-green-700">
-              Rs. {summary.totalAmount}
-            </p>
-          </div>
-          <div className="text-center p-4 bg-purple-50 rounded-lg">
-            <p className="text-sm text-gray-600 mb-1">Paid Amount</p>
-            <p className="text-2xl font-bold text-purple-700">
-              Rs. {summary.paidAmount}
-            </p>
-            <p className="text-xs text-gray-500">
-              {summary.paidCount} transactions
-            </p>
-          </div>
-          <div className="text-center p-4 bg-amber-50 rounded-lg">
-            <p className="text-sm text-gray-600 mb-1">Pending Amount</p>
-            <p className="text-2xl font-bold text-amber-700">
-              Rs. {summary.pendingAmount}
-            </p>
-            <p className="text-xs text-gray-500">
-              {summary.pendingCount} pending
-            </p>
-          </div>
+        <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-6 mb-10">
+          {[
+            { label: "Total Invoiced", val: formatPKR(summary.totalAmount), icon: <TrendingUp />, color: "indigo" },
+            { label: "Paid Amount", val: formatPKR(summary.paidAmount), icon: <CheckCircle2 />, color: "green", sub: `${summary.paidCount} payments` },
+            { label: "Pending Dues", val: formatPKR(summary.pendingAmount), icon: <Clock />, color: "amber", sub: `${summary.pendingCount} unpaid` },
+            { label: "History", val: summary.totalTransactions, icon: <History />, color: "slate", sub: "Total Vouchers" }
+          ].map((stat, i) => (
+            <motion.div 
+              key={i}
+              initial={{ opacity: 0, y: 20 }}
+              animate={{ opacity: 1, y: 0 }}
+              transition={{ delay: i * 0.1 }}
+              className="bg-white p-6 rounded-3xl border border-slate-200/60 shadow-sm hover:shadow-md transition-shadow group"
+            >
+              <div className={`p-2 w-fit rounded-xl bg-${stat.color}-50 text-${stat.color}-600 mb-4 group-hover:scale-110 transition-transform`}>
+                {React.cloneElement(stat.icon, { size: 20 })}
+              </div>
+              <p className="text-[11px] font-black text-slate-400 uppercase tracking-widest mb-1">{stat.label}</p>
+              <h3 className={`text-xl font-black text-${stat.color}-700 tracking-tight`}>{stat.val}</h3>
+              {stat.sub && <p className="text-[10px] font-bold text-slate-400 mt-2">{stat.sub}</p>}
+            </motion.div>
+          ))}
         </div>
       )}
-
-      {/* Student Info Card */}
-      <div className="bg-white rounded-lg shadow-md p-6 mb-8">
-        <div className="flex flex-col gap-4 text-lg text-gray-600">
-          <div>
-            <span className="font-semibold">Name:</span> {user.name}
-          </div>
-          <div>
-            <span className="font-semibold">Student Email:</span> {user.email}
-          </div>
-          {summary && (
-            <div className="pt-4 border-t">
-              <span className="font-semibold">Payment Summary:</span>{" "}
-              {summary.paidCount} paid, {summary.pendingCount} pending,{" "}
-              {summary.failedCount || 0} failed
-            </div>
-          )}
-        </div>
-      </div>
 
       {/* Desktop Table View */}
-      <div className="bg-white rounded-lg shadow-md overflow-x-auto hidden md:block">
-        <table className="min-w-full table-auto text-sm text-left shadow">
-          <thead className="bg-[#716ACA] text-white tracking-wider border-b">
-            <tr>
-              <th className="px-4 py-3 border border-gray-300 text-center">
-                Challan No
-              </th>
-              <th className="px-4 py-3 border border-gray-300 text-center">
-                Description
-              </th>
-              <th className="px-4 py-3 border border-gray-300 text-center">
-                Amount (Rs.)
-              </th>
-              <th className="px-4 py-3 border border-gray-300 text-center">
-                Due Date
-              </th>
-              <th className="px-4 py-3 border border-gray-300 text-center">
-                Payment Method
-              </th>
-              <th className="px-4 py-3 border border-gray-300 text-center">
-                Status
-              </th>
+      <motion.div 
+        initial={{ opacity: 0, scale: 0.98 }}
+        animate={{ opacity: 1, scale: 1 }}
+        className="bg-white rounded-3xl border border-slate-200/60 shadow-sm overflow-hidden hidden md:block"
+      >
+        <div className="px-8 py-6 border-b border-slate-100 bg-slate-50/50 flex items-center justify-between">
+          <h3 className="text-lg font-black text-slate-900 tracking-tight uppercase flex items-center gap-2">
+            <ArrowUpRight className="w-5 h-5 text-indigo-600" />
+            Transaction Ledger
+          </h3>
+          <span className="text-[10px] font-black text-slate-400 uppercase tracking-widest">
+            Showing last {transactions.length} vouchers
+          </span>
+        </div>
+
+        <table className="min-w-full table-auto">
+          <thead>
+            <tr className="bg-slate-50/80 text-slate-400">
+              <th className="px-8 py-4 text-left text-[11px] font-black uppercase tracking-widest">Challan No</th>
+              <th className="px-8 py-4 text-left text-[11px] font-black uppercase tracking-widest">Description</th>
+              <th className="px-8 py-4 text-center text-[11px] font-black uppercase tracking-widest">Amount</th>
+              <th className="px-8 py-4 text-center text-[11px] font-black uppercase tracking-widest">Due Date</th>
+              <th className="px-8 py-4 text-center text-[11px] font-black uppercase tracking-widest">Status</th>
             </tr>
           </thead>
-          <tbody className="divide-y">
+          <tbody className="divide-y divide-slate-100">
             {transactions?.map((item, idx) => {
               const status = getStatusDisplay(item);
 
               return (
-                <tr key={idx} className="hover:bg-gray-50">
-                  <td className="px-4 py-3 border border-gray-300 text-center">
+                <tr key={idx} className="group hover:bg-slate-50 transition-colors">
+                  <td className="px-8 py-5 text-sm font-black text-slate-900">
                     {item.challanNo || `CH${idx + 1000}`}
                   </td>
-                  <td className="px-4 py-3 border border-gray-300 text-center">
-                    {item.description || "Payment"}
+                  <td className="px-8 py-5">
+                    <div className="flex flex-col">
+                      <span className="text-sm font-bold text-slate-700">{item.description || "Fee Payment"}</span>
+                      <span className="text-[10px] font-bold text-slate-400 uppercase">{item.paymentMethod || "Online"}</span>
+                    </div>
                   </td>
-                  <td className="px-4 py-3 border border-gray-300 text-center">
-                    {formatPKR(item.ammount || 0)}
+                  <td className="px-8 py-5 text-center">
+                    <span className="text-sm font-black text-indigo-600 bg-indigo-50 px-3 py-1.5 rounded-xl border border-indigo-100">
+                      {formatPKR(item.ammount || 0)}
+                    </span>
                   </td>
-                  <td className="px-4 py-3 border border-gray-300 text-center text-green-700">
-                    {item.dueDate
-                      ? new Date(item.dueDate).toLocaleDateString()
-                      : "-"}
+                  <td className="px-8 py-5 text-center">
+                    <div className="flex flex-col items-center">
+                      <span className="text-sm font-bold text-slate-600">
+                        {item.dueDate ? new Date(item.dueDate).toLocaleDateString() : "-"}
+                      </span>
+                      <span className="text-[10px] font-bold text-green-600 uppercase tracking-tighter">Valid Entry</span>
+                    </div>
                   </td>
-                  <td className="px-4 py-3 border border-gray-300 text-center font-semibold">
-                    {item.paymentMethod || "Stripe"}
-                  </td>
-                  <td className="px-4 py-3 border border-gray-300 text-center">
+                  <td className="px-8 py-5 text-center">
                     {status.isActionable ? (
-                      <button
-                        className="cursor-pointer flex items-center justify-center gap-2 px-4 py-2 rounded-lg border border-[#635bff] text-[#635bff] hover:bg-[#635bff] hover:text-white transition-colors"
+                      <motion.button
+                        whileHover={{ scale: 1.05 }}
+                        whileTap={{ scale: 0.95 }}
+                        className="inline-flex items-center gap-2 px-6 py-2.5 rounded-xl bg-indigo-600 text-white font-black text-xs uppercase tracking-widest shadow-lg shadow-indigo-100 hover:bg-indigo-700 transition-all cursor-pointer"
                         onClick={() => {
                           setSelectedTransaction(item);
                           setOpen(true);
                         }}
                       >
-                        <FaCcStripe className="h-5 w-5" />
-                        <span className="font-medium">Pay Now</span>
-                      </button>
+                        <CreditCard className="h-4 w-4" />
+                        Pay Now
+                      </motion.button>
                     ) : (
-                      <div
-                        className={`flex items-center justify-center gap-2 px-4 py-2 rounded-lg ${status.bgColor} ${status.textColor} border`}
-                      >
+                      <div className={`inline-flex items-center gap-2 px-4 py-2 rounded-xl border-2 ${status.bgColor} ${status.textColor} ${status.borderColor} text-[10px] font-black uppercase tracking-widest shadow-sm`}>
                         {status.icon}
-                        <span className="font-medium">{status.text}</span>
+                        {status.text}
                       </div>
                     )}
                   </td>
                 </tr>
               );
             })}
-
-            {/* Empty state */}
-            {transactions.length === 0 && !loading && (
-              <tr>
-                <td colSpan="6" className="px-4 py-8 text-center text-gray-500">
-                  No transactions found. Your payments will appear here.
-                </td>
-              </tr>
-            )}
           </tbody>
         </table>
-      </div>
+        
+        {transactions.length === 0 && (
+          <div className="p-20 flex flex-col items-center justify-center text-center">
+            <Info className="w-12 h-12 text-slate-200 mb-4" />
+            <p className="text-slate-400 font-black text-lg uppercase tracking-widest">No Records Found</p>
+            <p className="text-slate-300 text-sm mt-1">Your payment vouchers will be listed here.</p>
+          </div>
+        )}
+      </motion.div>
 
       {/* Mobile Card View */}
-      <div className="block md:hidden space-y-4">
+      <div className="md:hidden space-y-6">
         {transactions?.map((item, idx) => {
           const status = getStatusDisplay(item);
 
           return (
-            <div
+            <motion.div
               key={idx}
-              className="bg-white border border-gray-200 rounded-lg p-4 shadow-md space-y-2"
+              initial={{ opacity: 0, x: -10 }}
+              animate={{ opacity: 1, x: 0 }}
+              transition={{ delay: idx * 0.05 }}
+              className="bg-white border border-slate-200/60 rounded-3xl p-6 shadow-sm"
             >
-              <div className="flex justify-between text-sm">
-                <span className="font-medium text-gray-600">Challan No:</span>
-                <span>{item.challanNo || `CH${idx + 1000}`}</span>
+              <div className="flex justify-between items-start mb-6">
+                <div>
+                  <span className="text-[10px] font-black text-slate-400 uppercase tracking-widest">Voucher #</span>
+                  <h4 className="text-lg font-black text-slate-900 tracking-tight">{item.challanNo || `CH${idx + 1000}`}</h4>
+                </div>
+                <div className={`flex items-center gap-1.5 px-3 py-1.5 rounded-xl ${status.bgColor} ${status.textColor} text-[10px] font-black uppercase tracking-widest border border-current opacity-80`}>
+                  {status.icon}
+                  {status.text}
+                </div>
               </div>
-              <div className="flex justify-between text-sm">
-                <span className="font-medium text-gray-600">Description:</span>
-                <span className="text-right">
-                  {item.description || "Payment"}
-                </span>
+
+              <div className="space-y-4 mb-6">
+                <div className="flex justify-between items-center text-sm font-bold">
+                  <span className="text-slate-400 uppercase text-[10px]">Description</span>
+                  <span className="text-slate-900">{item.description || "Payment"}</span>
+                </div>
+                <div className="flex justify-between items-center text-sm font-bold">
+                  <span className="text-slate-400 uppercase text-[10px]">Due Date</span>
+                  <span className="text-slate-900">{item.dueDate ? new Date(item.dueDate).toLocaleDateString() : "-"}</span>
+                </div>
+                <div className="flex justify-between items-center">
+                  <span className="text-slate-400 font-bold uppercase text-[10px]">Total Amount</span>
+                  <span className="text-lg font-black text-indigo-600">{formatPKR(item.ammount || 0)}</span>
+                </div>
               </div>
-              <div className="flex justify-between text-sm">
-                <span className="font-medium text-gray-600">Amount (Rs.):</span>
-                <span>Rs. {item.ammount || 0}</span>
-              </div>
-              <div className="flex justify-between text-sm text-green-700">
-                <span className="font-medium text-gray-600">Due Date:</span>
-                <span>
-                  {item.dueDate
-                    ? new Date(item.dueDate).toLocaleDateString()
-                    : "-"}
-                </span>
-              </div>
-              <div className="flex justify-between text-sm">
-                <span className="font-medium text-gray-600">
-                  Payment Method:
-                </span>
-                <span className="font-semibold">
-                  {item.paymentMethod || "Stripe"}
-                </span>
-              </div>
-              <div className="flex justify-between items-center text-sm pt-2 border-t">
-                <span className="font-medium text-gray-600">Status:</span>
-                {status.isActionable ? (
-                  <button
-                    className="cursor-pointer flex items-center gap-2 px-3 py-1.5 rounded-lg border border-[#635bff] text-[#635bff] hover:bg-[#635bff] hover:text-white transition-colors"
-                    onClick={() => {
-                      setSelectedTransaction(item);
-                      setOpen(true);
-                    }}
-                  >
-                    <FaCcStripe className="h-4 w-4" />
-                    <span className="font-medium">Pay Now</span>
-                  </button>
-                ) : (
-                  <div
-                    className={`flex items-center gap-2 px-3 py-1.5 rounded-lg ${status.bgColor} ${status.textColor} border`}
-                  >
-                    {status.icon}
-                    <span className="font-medium">{status.text}</span>
-                  </div>
-                )}
-              </div>
-            </div>
+
+              {status.isActionable && (
+                <button
+                  className="w-full py-4 rounded-2xl bg-indigo-600 text-white font-black text-xs uppercase tracking-widest shadow-lg shadow-indigo-100 flex items-center justify-center gap-3 active:scale-95 transition-all"
+                  onClick={() => {
+                    setSelectedTransaction(item);
+                    setOpen(true);
+                  }}
+                >
+                  <CreditCard className="h-4 w-4" />
+                  Pay Now
+                </button>
+              )}
+            </motion.div>
           );
         })}
-
-        {/* Empty state for mobile */}
-        {transactions.length === 0 && !loading && (
-          <div className="bg-white border border-gray-200 rounded-lg p-8 text-center">
-            <p className="text-gray-500 mb-2">No transactions found</p>
-            <p className="text-sm text-gray-400">
-              Your payments will appear here once available.
-            </p>
-          </div>
-        )}
       </div>
 
       {/* Payment Modal */}
-      {open && selectedTransaction && (
-        <PaymentModal
-          transaction={selectedTransaction}
-          onClose={() => {
-            setOpen(false);
-            setSelectedTransaction(null);
-            refreshPayments();
-          }}
-          onPaymentSuccess={refreshPayments}
-        />
-      )}
+      <AnimatePresence>
+        {open && selectedTransaction && (
+          <PaymentModal
+            transaction={selectedTransaction}
+            onClose={() => {
+              setOpen(false);
+              setSelectedTransaction(null);
+              refreshPayments();
+            }}
+            onPaymentSuccess={refreshPayments}
+          />
+        )}
+      </AnimatePresence>
     </div>
   );
 };
 
 export default AccountBook;
 
-// Payment Modal Component
+// Modern Payment Modal
 const PaymentModal = ({ onClose, transaction, onPaymentSuccess }) => {
   const [paymentCompleted, setPaymentCompleted] = useState(false);
 
@@ -393,64 +382,93 @@ const PaymentModal = ({ onClose, transaction, onPaymentSuccess }) => {
     setTimeout(() => {
       onClose();
       if (onPaymentSuccess) onPaymentSuccess();
-    }, 2000);
+    }, 2500);
   };
 
   return (
-    <div className="fixed inset-0 bg-black/50 flex items-center justify-center z-50 p-4">
-      <div className="bg-white rounded-lg p-6 w-full max-w-md relative max-h-[90vh] overflow-y-auto">
+    <motion.div 
+      initial={{ opacity: 0 }}
+      animate={{ opacity: 1 }}
+      exit={{ opacity: 0 }}
+      className="fixed inset-0 bg-slate-900/40 backdrop-blur-sm flex items-center justify-center z-[100] p-4"
+    >
+      <motion.div 
+        initial={{ scale: 0.9, opacity: 0, y: 20 }}
+        animate={{ scale: 1, opacity: 1, y: 0 }}
+        exit={{ scale: 0.9, opacity: 0, y: 20 }}
+        className="bg-white rounded-[40px] p-8 w-full max-w-lg relative shadow-2xl border border-slate-200"
+      >
         <button
           onClick={onClose}
-          className="absolute top-3 right-3 text-gray-500 hover:text-black text-2xl"
+          className="absolute top-6 right-6 p-2 hover:bg-slate-100 rounded-full transition-colors text-slate-400 hover:text-slate-600"
         >
-          ✕
+          <X className="w-5 h-5" />
         </button>
 
-        <h2 className="text-xl font-semibold mb-4">
-          {paymentCompleted ? "Payment Successful!" : "Complete Payment"}
-        </h2>
+        <div className="flex items-center gap-4 mb-8">
+          <div className="p-3 bg-indigo-50 rounded-2xl">
+            <CreditCard className="w-6 h-6 text-indigo-600" />
+          </div>
+          <div>
+            <h2 className="text-2xl font-black text-slate-900 tracking-tight">
+              {paymentCompleted ? "Payment Received" : "Secure Payment"}
+            </h2>
+            <p className="text-slate-500 text-sm font-medium">Safe & encrypted transaction</p>
+          </div>
+        </div>
 
         {paymentCompleted ? (
-          <div className="text-center py-4">
-            <FaCheckCircle className="h-16 w-16 text-green-500 mx-auto mb-4" />
-            <p className="text-lg font-semibold text-gray-800 mb-2">
-              Payment Successful!
+          <motion.div 
+            initial={{ opacity: 0, scale: 0.5 }}
+            animate={{ opacity: 1, scale: 1 }}
+            className="text-center py-10"
+          >
+            <div className="w-24 h-24 bg-green-100 rounded-full flex items-center justify-center mx-auto mb-6">
+              <CheckCircle2 className="h-12 w-12 text-green-600" />
+            </div>
+            <p className="text-2xl font-black text-slate-900 tracking-tight mb-2">
+              Success!
             </p>
-            <p className="text-gray-600">
-              Your payment of{" "}
-              <span className="font-bold">
-                {new Intl.NumberFormat("ur-PK", {
-                  style: "currency",
-                  currency: "PKR",
-                }).format(transaction?.ammount)}
-              </span>{" "}
-              has been processed.
+            <p className="text-slate-500 font-medium">
+              Payment of <span className="text-indigo-600 font-bold">Rs. {transaction?.ammount}</span> confirmed.
             </p>
-          </div>
+            <p className="text-[10px] font-black text-slate-300 uppercase tracking-widest mt-8">Closing gateway...</p>
+          </motion.div>
         ) : (
-          <>
-            <div className="mb-6 p-4 bg-gray-50 rounded-lg">
-              <p className="mb-2">
-                <strong>Challan No:</strong> {transaction?.challanNo}
-              </p>
-              <p className="mb-2">
-                <strong>Description:</strong> {transaction?.description}
-              </p>
-              <p className="text-lg font-semibold">
-                <strong>Amount:</strong> Rs. {transaction?.ammount}
-              </p>
+          <div className="space-y-6">
+            <div className="bg-slate-50 rounded-3xl p-6 border border-slate-100">
+              <div className="grid grid-cols-2 gap-4">
+                <div>
+                  <span className="text-[10px] font-black text-slate-400 uppercase tracking-widest">Challan</span>
+                  <p className="text-sm font-black text-slate-900 mt-0.5">{transaction?.challanNo}</p>
+                </div>
+                <div>
+                  <span className="text-[10px] font-black text-slate-400 uppercase tracking-widest">Type</span>
+                  <p className="text-sm font-black text-slate-900 mt-0.5">{transaction?.description || "Tuition Fee"}</p>
+                </div>
+                <div className="col-span-2 pt-4 border-t border-slate-200 mt-2">
+                  <span className="text-[10px] font-black text-slate-400 uppercase tracking-widest">Total Payable</span>
+                  <p className="text-2xl font-black text-indigo-600 mt-0.5">Rs. {transaction?.ammount}</p>
+                </div>
+              </div>
             </div>
 
-            <Elements stripe={stripePromise}>
-              <CheckoutForm
-                amount={transaction?.ammount}
-                transactionId={transaction?._id}
-                onSuccess={handlePaymentSuccess}
-              />
-            </Elements>
-          </>
+            <div className="px-2">
+              <Elements stripe={stripePromise}>
+                <CheckoutForm
+                  amount={transaction?.ammount}
+                  transactionId={transaction?._id}
+                  onSuccess={handlePaymentSuccess}
+                />
+              </Elements>
+            </div>
+            
+            <p className="text-center text-[10px] font-bold text-slate-400 uppercase tracking-tight">
+              Powered by Stripe • No extra charges applied
+            </p>
+          </div>
         )}
-      </div>
-    </div>
+      </motion.div>
+    </motion.div>
   );
 };

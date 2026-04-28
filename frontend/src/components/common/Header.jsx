@@ -11,12 +11,8 @@ import { updateProfilePicture } from '../../api/userApi';
 import { toast } from 'sonner';
 import { setAllStudents, setLogout, setUser } from '../../redux/slices/userSlice';
 import { setCourses } from '../../redux/slices/courseSlice';
-import { Loader2 } from 'lucide-react';
-import { FiAlignRight } from "react-icons/fi";
+import { Loader2, Menu, X, Bell, Bot, LogOut, History, ShieldCheck, ChevronDown, User } from 'lucide-react';
 import { motion, AnimatePresence } from "framer-motion";
-import { BiDotsVerticalRounded } from "react-icons/bi";
-import { RxCross2 } from "react-icons/rx";
-import { AiOutlineOpenAI } from "react-icons/ai";
 
 
 
@@ -34,12 +30,12 @@ const Header = ({ toggleSidebar, sidebarOpen }) => {
 	const [isOpen, setIsOpen] = useState(false);
 
 	const changePassword = () => {
-		document.getElementById("my_modal_2").close()
+		modalRef.current?.close()
 		navigate("/settings/change-password")
 	}
 
 	const myLoginHistory = () => {
-		document.getElementById("my_modal_2").close()
+		modalRef.current?.close()
 		navigate("/settings/myloginhistory")
 	}
 
@@ -56,10 +52,12 @@ const Header = ({ toggleSidebar, sidebarOpen }) => {
 				if (result.success) {
 					setLoading(false)
 					dispatch(setUser(result.updatedStudent));
+					toast.success("Profile picture updated!");
 				}
 			} catch (error) {
 				setLoading(false);
 				console.error(error);
+				toast.error("Failed to update profile picture");
 			}
 		};
 
@@ -76,239 +74,154 @@ const Header = ({ toggleSidebar, sidebarOpen }) => {
 	}
 
 	return (
-		<div className='w-full lg:w-[81%] flex-1 h-18 bg-[#282a3c] md:bg-white z-50 fixed top-0 shadow-md'>
-			<div className='h-full flex items-center justify-between mx-5 md:mx-10'>
+		<header className='w-full lg:w-[81%] flex-1 h-20 bg-white/80 backdrop-blur-md z-40 fixed top-0 border-b border-slate-200/60'>
+			<div className='h-full flex items-center justify-between px-4 md:px-8'>
 
-				<div className='flex items-center'>
-
-					<div className="hidden md:flex lg:hidden mr-3">
-						<AnimatePresence mode="wait" initial={false}>
-							{sidebarOpen ? (
-								<motion.div
-									key="close"
-									initial={{ opacity: 0, rotate: -90, scale: 0.5 }}
-									animate={{ opacity: 1, rotate: 0, scale: 1 }}
-									exit={{ opacity: 0, rotate: 90, scale: 0.5 }}
-									transition={{ duration: 0.2 }}
-								>
-									<RxCross2 onClick={toggleSidebar} className="text-black w-7 h-7 cursor-pointer" />
-								</motion.div>
-							) : (
-								<motion.div
-									key="open"
-									initial={{ opacity: 0, rotate: -90, scale: 0.5 }}
-									animate={{ opacity: 1, rotate: 0, scale: 1 }}
-									exit={{ opacity: 0, rotate: 90, scale: 0.5 }}
-									transition={{ duration: 0.2 }}
-								>
-									<FiAlignRight onClick={toggleSidebar} className="text-black w-7 h-7 cursor-pointer" />
-								</motion.div>
-							)}
-						</AnimatePresence>
-					</div>
-
-
-					<Link to="/"><img className='hidden md:flex h-10 w-auto items-center my-auto' src={LogoImg} alt="" /></Link>
-					<Link to="/"><img className='flex md:hidden h-10 w-auto items-center my-auto' src={LogoImgDark} alt="" /></Link> 
-					<p className='text-2xl pl-5 hidden md:flex'>Learning Management System</p>
-				</div>
-
-				<div className="flex md:hidden">
-
-					<AnimatePresence mode="wait" initial={false}>
-						{sidebarOpen ? (
-							<motion.div
-								key="close"
-								initial={{ opacity: 0, rotate: -90, scale: 0.5 }}
-								animate={{ opacity: 1, rotate: 0, scale: 1 }}
-								exit={{ opacity: 0, rotate: 90, scale: 0.5 }}
-								transition={{ duration: 0.2 }}
-							>
-								<RxCross2 onClick={toggleSidebar} className="text-gray-300 hover:text-gray-200 w-7 h-7 cursor-pointer" />
-							</motion.div>
-						) : (
-							<motion.div
-								key="open"
-								initial={{ opacity: 0, rotate: -90, scale: 0.5 }}
-								animate={{ opacity: 1, rotate: 0, scale: 1 }}
-								exit={{ opacity: 0, rotate: 90, scale: 0.5 }}
-								transition={{ duration: 0.2 }}
-							>
-								<FiAlignRight onClick={toggleSidebar} className="text-gray-300 hover:text-gray-200 w-7 h-7 cursor-pointer" />
-							</motion.div>
-						)}
-					</AnimatePresence>
-
-					<BiDotsVerticalRounded onClick={() => setIsOpen((prev) => !prev)} className='text-gray-300 hover:text-gray-200 ml-1.5 w-6.5 h-6.5' />
-				</div>
-
-				{/* Navbar for lg screens */}
-				<div className='md:flex items-center hidden'>
-					
-					<div className='mx-5 '>
-						<Link
-							to="/chatbot"
-							className="inline-block transition duration-300 ease-in-out hover:scale-110 hover:text-gray-500 hover:drop-shadow-lg"
-						>
-							<AiOutlineOpenAI className='w-7 h-7 cursor-pointer' />
-						</Link>
-
-					</div>
-					{
-						user?.role === "admin" && <div>
-							<span onClick={() => navigate("/admin")} className='bg-gray-600 hover:bg-gray-700 rounded-2xl tracking-wide text-white text-sm px-2 py-1 cursor-pointer'>
-								Admin
-							</span>
-						</div>
-					}
-
-					<div className='mx-4 '>
-						<Link
-							to="/noticeboard"
-							className="inline-block transition duration-300 ease-in-out hover:scale-110 hover:text-yellow-500 hover:drop-shadow-lg"
-						>
-							<GoBell className="h-6 w-6 text-primary" />
-						</Link>
-
-					</div>
-
-					<div className='flex flex-col mx-auto w-full'>
-						<span className='text-[13px] uppercase tracking-wide text-gray-600'>{user?.name}</span>
-						<p className='text-xs text-gray-600'>({user?.email})</p>
-					</div>
-
-					<div className='mr-2 cursor-pointer' onClick={() => document.getElementById('my_modal_2').showModal()}>
-						<img className="w-20 h-11 rounded-full object-cover" title='change profile' src={user?.profilePicture} alt="" />
-					</div>
-				</div>
-
-			</div>
-
-			{/* Navbar for sm screens */}
-			<div className={`
-				md:hidden
-				h-15 flex bg-white items-center justify-end
-				transform transition-all duration-300
-				${isOpen ? "translate-y-0 opacity-100" : "-translate-y-full opacity-0 pointer-events-none"}
-				
-			`}>
-				{
-					user?.role === "admin" && <div>
-						<span onClick={() => navigate("/admin")} className='bg-gray-600 hover:bg-gray-700 rounded-2xl tracking-wide text-white text-sm px-2 py-1 cursor-pointer'>
-							Admin
-						</span>
-					</div>
-				}
-				<div className='mx-3'>
-					<Link
-						to="/noticeboard"
-						className="inline-block transition duration-300 ease-in-out hover:scale-110 hover:text-yellow-500 hover:drop-shadow-lg"
+				{/* Left Side - Brand & Toggle */}
+				<div className='flex items-center gap-4'>
+					<button 
+						onClick={toggleSidebar}
+						className="lg:hidden p-2 hover:bg-slate-100 rounded-xl transition-colors text-slate-600"
 					>
-						<GoBell className="h-6 w-6 text-primary" />
+						{sidebarOpen ? <X className="w-6 h-6" /> : <Menu className="w-6 h-6" />}
+					</button>
+
+					<Link to="/" className="flex items-center gap-3">
+						<img className='h-10 w-auto object-contain hidden md:block' src={LogoImg} alt="Logo" />
+						<img className='h-8 w-auto object-contain md:hidden' src={LogoImgDark} alt="Logo" />
+						<div className="hidden lg:flex flex-col">
+							<h1 className="text-lg font-black text-slate-900 tracking-tight leading-tight">LMS</h1>
+							<span className="text-[10px] font-bold text-slate-400 uppercase tracking-widest">Portal</span>
+						</div>
 					</Link>
 				</div>
 
-				<div className='flex flex-col'>
-					<span className='text-[13px] uppercase tracking-wide text-gray-600'>{user?.name}</span>
-					<p className='text-xs text-gray-600'>({user?.email})</p>
-				</div>
+				{/* Right Side - Actions & Profile */}
+				<div className='flex items-center gap-2 md:gap-4'>
+					
+					{/* Desktop Actions */}
+					<div className='hidden md:flex items-center gap-2 pr-4 border-r border-slate-100'>
+						<Link
+							to="/chatbot"
+							className="p-2.5 text-slate-500 hover:text-indigo-600 hover:bg-indigo-50 rounded-xl transition-all group"
+							title="AI Assistant"
+						>
+							<Bot className='w-5.5 h-5.5 transition-transform group-hover:scale-110' />
+						</Link>
 
-				<div className='mx-4 cursor-pointer' onClick={() => document.getElementById('my_modal_2').showModal()}>
-					<img className="w-11 h-11 rounded-full object-cover" src={user?.profilePicture} alt="" />
+						<Link
+							to="/noticeboard"
+							className="p-2.5 text-slate-500 hover:text-indigo-600 hover:bg-indigo-50 rounded-xl transition-all group relative"
+							title="Notifications"
+						>
+							<Bell className="w-5.5 h-5.5 transition-transform group-hover:scale-110" />
+							<span className="absolute top-2 right-2 w-2 h-2 bg-indigo-500 rounded-full border-2 border-white"></span>
+						</Link>
+					</div>
+
+					{/* User Profile */}
+					<div 
+						onClick={() => modalRef.current?.showModal()}
+						className='flex items-center gap-3 pl-2 cursor-pointer hover:bg-slate-50 p-1.5 rounded-2xl transition-all group'
+					>
+						<div className='hidden md:flex flex-col text-right'>
+							<span className='text-sm font-bold text-slate-900 leading-none group-hover:text-indigo-600 transition-colors'>{user?.name}</span>
+							<span className='text-[11px] font-medium text-slate-400 mt-1 uppercase tracking-wider'>Student</span>
+						</div>
+						
+						<div className="relative">
+							<img 
+								className="w-10 h-10 md:w-11 md:h-11 rounded-xl object-cover ring-2 ring-slate-100 group-hover:ring-indigo-100 transition-all shadow-sm" 
+								src={user?.profilePicture} 
+								alt="Profile" 
+							/>
+							<div className="absolute -bottom-1 -right-1 w-4 h-4 bg-green-500 border-2 border-white rounded-full shadow-sm"></div>
+						</div>
+						<ChevronDown className="w-4 h-4 text-slate-400 group-hover:text-indigo-600 transition-all" />
+					</div>
+
+					{/* Admin Shortcut */}
+					{user?.role === "admin" && (
+						<button 
+							onClick={() => navigate("/admin")}
+							className='hidden lg:flex items-center gap-2 bg-slate-900 hover:bg-indigo-600 text-white text-[11px] font-bold px-3 py-1.5 rounded-xl transition-all ml-2'
+						>
+							<ShieldCheck className="w-3.5 h-3.5" />
+							ADMIN
+						</button>
+					)}
 				</div>
 			</div>
 
-
-			<dialog id="my_modal_2" className="modal" ref={modalRef} >
-				<div className="modal-box absolute top-34 md:top-20 right-5 w-68 md:w-82 h-84 p-0">
-					<div className="relative">
-						<img className='h-26 md:h-30 w-full object-cover' src={courseBG} alt="courseBgImg" />
-						<div className="absolute inset-0 flex justify-start items-center gap-2">
-
-							{loading ? (
-								<div className="flex items-center justify-center px-14"><Loader2 className='w-7 h-7 animate-spin' /></div>
-							) : (
-								<div
-									className="relative w-20 h-20 md:w-24 md:h-24 ml-10 group"
+			{/* Profile Modal - Modern Redesign */}
+			<dialog id="my_modal_2" className="modal backdrop-blur-sm" ref={modalRef}>
+				<div className="modal-box bg-white p-0 rounded-3xl border border-slate-200 shadow-2xl w-[90%] max-w-sm overflow-hidden">
+					{/* Header Background */}
+					<div className="h-28 bg-gradient-to-br from-indigo-600 to-violet-700 relative">
+						<div className="absolute -bottom-10 left-8">
+							<div className="relative group">
+								<img 
+									className="w-20 h-20 md:w-24 md:h-24 rounded-2xl border-4 border-white object-cover shadow-lg shadow-indigo-200" 
+									src={user?.profilePicture} 
+									alt="User Avatar" 
+								/>
+								<button 
 									onClick={() => inputRef.current?.click()}
+									className="absolute inset-0 bg-black/40 rounded-2xl opacity-0 group-hover:opacity-100 flex items-center justify-center transition-opacity cursor-pointer"
 								>
-									{/* Hidden File Input */}
-									<input
-										type="file"
-										accept="image/*"
-										name="profilePicture"
-										className="hidden"
-										onChange={(e) => fileChangeHandler(e)}
-										ref={inputRef}
-									/>
-
-									{/* Profile Image */}
-									<img
-										ref={imgRef}
-										className="w-full h-full rounded-full object-cover"
-										src={user?.profilePicture}
-										alt="Profile"
-									/>
-
-									{/* Overlay with camera icon */}
-									<div className="absolute inset-0 bg-black bg-opacity-50 rounded-full flex justify-center items-center opacity-0 group-hover:opacity-60 transition-opacity duration-300 cursor-pointer">
-										<svg
-											xmlns="http://www.w3.org/2000/svg"
-											className="h-6 w-6 text-white"
-											fill="none"
-											viewBox="0 0 24 24"
-											stroke="currentColor"
-										>
-											<path
-												strokeLinecap="round"
-												strokeLinejoin="round"
-												strokeWidth={2}
-												d="M3 7h4l2-3h6l2 3h4v13H3V7z"
-											/>
-											<path
-												strokeLinecap="round"
-												strokeLinejoin="round"
-												strokeWidth={2}
-												d="M12 11a3 3 0 100 6 3 3 0 000-6z"
-											/>
-										</svg>
-									</div>
-								</div>
-
-							)}
-
-
-							<div className='flex flex-col ml-0 md:ml-3'>
-								<p className='text-gray-200 text-lg mb-0.5 uppercase'>{user?.name}</p>
-								<p className='text-gray-300 text-xs overflow-x-hidden'>{user?.email}</p>
+									{loading ? <Loader2 className="w-6 h-6 text-white animate-spin" /> : <User className="w-6 h-6 text-white" />}
+								</button>
+								<input 
+									type="file" 
+									className="hidden" 
+									ref={inputRef} 
+									onChange={fileChangeHandler} 
+									accept="image/*" 
+								/>
 							</div>
 						</div>
 					</div>
 
-					<div className='my-5'>
-						<div className="flex items-center justify-start mx-5 hover:text-blue-400" >
-							<PiPassword className='w-5 h-5' />
-							<p onClick={changePassword} className='p-3 text-base text-gray-700 hover:text-blue-400 cursor-pointer'>Change Password</p>
+					{/* User Details */}
+					<div className="pt-12 px-8 pb-8">
+						<div className="mb-6">
+							<h3 className="text-xl font-black text-slate-900 tracking-tight uppercase">{user?.name}</h3>
+							<p className="text-sm font-medium text-slate-500">{user?.email}</p>
 						</div>
-						<div className="flex items-center justify-start mx-5 hover:text-blue-400">
-							<IoBagCheckOutline className='w-5 h-5' />
-							<p onClick={myLoginHistory} className='p-3 text-base text-gray-700 hover:text-blue-400 cursor-pointer'>My Login History</p>
+
+						{/* Menu Items */}
+						<div className="space-y-1 mb-8">
+							<button 
+								onClick={changePassword}
+								className="w-full flex items-center gap-3 px-4 py-3 text-slate-600 hover:text-indigo-600 hover:bg-indigo-50 rounded-xl transition-all group font-semibold text-sm"
+							>
+								<PiPassword className="w-5 h-5 transition-transform group-hover:scale-110" />
+								Change Password
+							</button>
+							<button 
+								onClick={myLoginHistory}
+								className="w-full flex items-center gap-3 px-4 py-3 text-slate-600 hover:text-indigo-600 hover:bg-indigo-50 rounded-xl transition-all group font-semibold text-sm"
+							>
+								<History className="w-5 h-5 transition-transform group-hover:scale-110" />
+								Login History
+							</button>
 						</div>
+
+						{/* Logout Button */}
+						<button 
+							onClick={logoutHandler}
+							className="w-full py-3 bg-slate-50 hover:bg-red-50 text-slate-600 hover:text-red-600 rounded-2xl font-bold flex items-center justify-center gap-2 transition-all border border-slate-100 hover:border-red-100"
+						>
+							<LogOut className="w-4 h-4" />
+							Sign Out
+						</button>
 					</div>
-
-
-					<button onClick={logoutHandler} className='text-blue-500 hover:text-blue-600 outline py-2 px-4 rounded-3xl hover:bg-gray-100 ml-5 cursor-pointer'>
-						Logout
-					</button>
-
 				</div>
 				<form method="dialog" className="modal-backdrop">
-					<button></button>
+					<button>close</button>
 				</form>
-
 			</dialog>
-
-		</div>
+		</header>
 	)
 }
 

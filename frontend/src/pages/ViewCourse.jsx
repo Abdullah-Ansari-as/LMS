@@ -11,6 +11,7 @@ import CommentSection from "./CommentSection";
 import { FaFileAlt } from "react-icons/fa";
 import { X } from "lucide-react";
 import { getAllCourses } from "../api/courseApi";
+import { markLectureComplete } from "../api/progressApi";
 import { setCourses } from "../redux/slices/courseSlice";
 
 const ViewCourse = () => {
@@ -64,6 +65,15 @@ const ViewCourse = () => {
   const playerInstanceRef = useRef(null);
   const progressIntervalRef = useRef(null);
   const progressCheckedRef = useRef(false);
+
+  const markLectureCompletedOnServer = async () => {
+    if (!course?._id || !currentLecture?._id) return;
+    try {
+      await markLectureComplete(course._id, currentLecture._id);
+    } catch (error) {
+      console.error("Failed to save lecture progress:", error);
+    }
+  };
 
   const loadYouTubeAPI = () => {
     if (window.__ytApiPromise) return window.__ytApiPromise;
@@ -165,6 +175,7 @@ const ViewCourse = () => {
                       return updatedLectures;
                     });
 
+                    markLectureCompletedOnServer();
                     toast("🎉 75% watched! Marked as done.");
                     if (progressIntervalRef.current) {
                       clearInterval(progressIntervalRef.current);
@@ -657,7 +668,7 @@ const ViewCourse = () => {
               </p>
             </div>
 
-            <div className="flex-1 bg-gray-50 p-4">
+            <div className="flex-1 bg-gray-50 p-4 overflow-hidden">
               {getHandoutPreviewType(selectedHandoutLecture) === "image" ? (
                 <div className="flex h-full items-center justify-center overflow-auto rounded-xl bg-white p-4">
                   <img
@@ -667,13 +678,13 @@ const ViewCourse = () => {
                   />
                 </div>
               ) : getHandoutPreviewType(selectedHandoutLecture) === "text" ? (
-                <div className="h-full w-full rounded-xl border border-gray-200 bg-white p-4 overflow-auto">
+                <div className="h-full w-full rounded-xl border border-gray-200 bg-white p-4 overflow-y-auto">
                   <pre className="whitespace-pre-wrap font-sans text-sm text-gray-800">
                     {handoutText || "Loading handout content..."}
                   </pre>
                 </div>
               ) : getHandoutPreviewType(selectedHandoutLecture) === "docx" ? (
-                <div className="h-full w-full rounded-xl border border-gray-200 bg-white p-6 overflow-auto">
+                <div className="h-full w-full rounded-xl border border-gray-200 bg-white p-6 overflow-y-auto">
                   <div
                     className="prose prose-sm max-w-none text-gray-800"
                     dangerouslySetInnerHTML={{

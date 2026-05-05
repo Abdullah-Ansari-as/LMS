@@ -7,6 +7,7 @@ import {
 	FilePlus2,
 	Megaphone,
 	LogOut,
+	TrendingUp,
 } from "lucide-react";
 import { BiLeftArrow } from 'react-icons/bi';
 import { setAllStudents, setLogout } from '../../redux/slices/userSlice';
@@ -21,6 +22,7 @@ const navLinks = [
 	{ name: "Upload Grades", path: "/admin/upload-grades", icon: <FilePlus2 size={20} /> },
 	{ name: "Submitted Assignments", path: "/admin/submitted-assignments", icon: <FilePlus2 size={20} /> },
 	{ name: "Submitted Quizzes", path: "/admin/submitted-quizzes", icon: <FilePlus2 size={20} /> },
+	{ name: "Student Progress", path: "/admin/student-progress", icon: <TrendingUp size={20} /> },
 	{ name: "Announcements", path: "/admin/announcements", icon: <Megaphone size={20} /> },
 ];
 

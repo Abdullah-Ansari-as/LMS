@@ -116,9 +116,13 @@ const Progress = () => {
             >
               {/* Assignments Section */}
               <div className="space-y-6">
-                <div className="flex items-center gap-2 px-2">
+                <div className="flex items-center gap-3 px-2">
                   <h4 className="text-lg font-black text-slate-900 tracking-tight uppercase">Assignments</h4>
-                  <div className="h-0.5 flex-1 bg-slate-100 rounded-full"></div>
+                  <div className="flex items-center gap-2 flex-1">
+                    <div className="w-1.5 h-1.5 rounded-full bg-indigo-600"></div>
+                    <div className="w-1.5 h-1.5 rounded-full bg-indigo-400"></div>
+                    <div className="w-1.5 h-1.5 rounded-full bg-indigo-200"></div>
+                  </div>
                 </div>
                 
                 <div className="space-y-3">
@@ -160,9 +164,13 @@ const Progress = () => {
 
               {/* Quizzes Section */}
               <div className="space-y-6">
-                <div className="flex items-center gap-2 px-2">
+                <div className="flex items-center gap-3 px-2">
                   <h4 className="text-lg font-black text-slate-900 tracking-tight uppercase">Quizzes</h4>
-                  <div className="h-0.5 flex-1 bg-slate-100 rounded-full"></div>
+                  <div className="flex items-center gap-2 flex-1">
+                    <div className="w-1.5 h-1.5 rounded-full bg-indigo-600"></div>
+                    <div className="w-1.5 h-1.5 rounded-full bg-indigo-400"></div>
+                    <div className="w-1.5 h-1.5 rounded-full bg-indigo-200"></div>
+                  </div>
                 </div>
 
                 <div className="space-y-3">

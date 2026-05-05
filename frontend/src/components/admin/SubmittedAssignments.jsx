@@ -1,11 +1,12 @@
 import React, { useEffect, useMemo, useState } from "react";
-import { Loader2 } from "lucide-react";
+import { Loader2, X, Download } from "lucide-react";
 import { fetchSubmittedAssignmentsAdmin } from "../../api/courseApi";
 
 const SubmittedAssignments = () => {
   const [loading, setLoading] = useState(false);
   const [submitted, setSubmitted] = useState([]);
   const [search, setSearch] = useState("");
+  const [viewingFile, setViewingFile] = useState(null);
 
   useEffect(() => {
     const load = async () => {
@@ -98,16 +99,12 @@ const SubmittedAssignments = () => {
                     </td>
                     <td>
                       {s?.file ? (
-                        <a
-                          className="text-blue-500 hover:underline"
-                          href={`${import.meta.env.VITE_BACKEND_URL}/api/courses/download?url=${encodeURIComponent(
-                            s.file
-                          )}`}
-                          target="_blank"
-                          rel="noreferrer"
+                        <button
+                          className="text-blue-500 hover:underline cursor-pointer"
+                          onClick={() => setViewingFile(s.file)}
                         >
-                          Download
-                        </a>
+                          View Assignment
+                        </button>
                       ) : (
                         "—"
                       )}
@@ -127,6 +124,40 @@ const SubmittedAssignments = () => {
           </div>
         )}
       </div>
+
+      {/* File Viewer Modal */}
+      {viewingFile && (
+        <div className="fixed inset-0 bg-black/50 flex items-center justify-center z-50 p-4">
+          <div className="bg-white rounded-lg max-w-4xl w-full max-h-[90vh] flex flex-col">
+            <div className="flex items-center justify-between p-4 border-b">
+              <h3 className="text-lg font-semibold">Assignment Preview</h3>
+              <button
+                onClick={() => setViewingFile(null)}
+                className="p-1 hover:bg-gray-100 rounded"
+              >
+                <X className="w-6 h-6" />
+              </button>
+            </div>
+            <div className="flex-1 overflow-auto bg-gray-50">
+              <embed
+                src={viewingFile}
+                className="w-full h-full"
+                type="application/pdf"
+              />
+            </div>
+            <div className="flex justify-end items-center p-4 border-t bg-white">
+              <a
+                href={viewingFile}
+                download
+                className="inline-flex items-center gap-2 px-4 py-2 bg-blue-600 hover:bg-blue-700 text-white font-semibold rounded-lg transition-colors"
+              >
+                <Download className="w-5 h-5" />
+                Download
+              </a>
+            </div>
+          </div>
+        </div>
+      )}
     </div>
   );
 };

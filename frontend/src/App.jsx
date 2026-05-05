@@ -32,6 +32,7 @@ import NoticeBoardAnnouncements from "./components/admin/NoticeBoardAnnouncement
 import AddNewCourse from "./components/admin/AddNewCourse";
 import SubmittedAssignments from "./components/admin/SubmittedAssignments";
 import SubmittedQuizzes from "./components/admin/SubmittedQuizzes";
+import StudentProgress from "./components/admin/StudentProgress";
 import ProtectedRoute from "./utils/ProtectedRoute";
 import RoleProtectedRoute from "./utils/RoleProtectedRoute";
 import { useSelector } from "react-redux";
@@ -146,6 +147,7 @@ function App() {
           <Route path="announcements" element={<NoticeBoardAnnouncements />} />
           <Route path="submitted-assignments" element={<SubmittedAssignments />} />
           <Route path="submitted-quizzes" element={<SubmittedQuizzes />} />
+          <Route path="student-progress" element={<StudentProgress />} />
           <Route path="show-submitted-quiz/:quizId" element={<ShowSubmittedSingleQuiz />} />
         </Route>
 

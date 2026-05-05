@@ -26,6 +26,21 @@ const userSchema = new mongoose.Schema({
 		type: String,
 		default: "https://encrypted-tbn0.gstatic.com/images?q=tbn:ANd9GcR4g_2Qj3LsNR-iqUAFm6ut2EQVcaou4u2YXw&s"
 	},
+	completedLectures: [
+		{
+			courseId: {
+				type: mongoose.Schema.Types.ObjectId,
+				ref: "Course",
+			},
+			lectureId: {
+				type: mongoose.Schema.Types.ObjectId,
+			},
+			completedAt: {
+				type: Date,
+				default: Date.now,
+			},
+		},
+	],
 	loginHistory: {
 		type: [Date], 
 		default: Date.now,

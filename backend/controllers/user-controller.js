@@ -111,7 +111,7 @@ const logout = async (req, res) => {
 
 const getAllStudents = async (_, res) => {
 	try {
-		const user = await User.find().select("-password");
+		const user = await User.find({ role: "student" }).select("-password");
 		if (!user) {
 			return res.status(404).json({ message: "Failed to get all users!" });
 		}

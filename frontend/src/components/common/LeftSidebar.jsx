@@ -48,12 +48,12 @@ const LeftSidebar = ({ toggleSidebar }) => {
 			<div className="p-7 mb-4 relative">
 				<div className="flex items-center gap-3">
 					<div className="flex -space-x-3">
-						<img className="h-11 w-11 rounded-xl shadow-lg border-2 border-slate-800 bg-white p-1.5 transition-transform hover:scale-110" src={VuLogo} alt="VU" />
-						<img className="h-11 w-11 rounded-xl shadow-lg border-2 border-slate-800 bg-white p-1.5 transition-transform hover:scale-110" src={GovLogo} alt="Gov" />
+						{/* <img className="h-11 w-11 rounded-xl shadow-lg border-2 border-slate-800 bg-white p-1.5 transition-transform hover:scale-110" src={VuLogo} alt="VU" />
+						<img className="h-11 w-11 rounded-xl shadow-lg border-2 border-slate-800 bg-white p-1.5 transition-transform hover:scale-110" src={GovLogo} alt="Gov" /> */}
 					</div>
 					<div className="flex flex-col ml-1">
-						<span className="text-[10px] font-black text-slate-500 tracking-[0.2em] uppercase leading-none">Student</span>
-						<span className="text-base font-black text-white tracking-tight mt-1">LMS Portal</span>
+						<span className="text-[10px] font-black text-white tracking-[0.2em] uppercase leading-none">Student</span>
+						<span className="text-base font-black text-white tracking-tight mt-1"> Portal</span>
 					</div>
 				</div>
 			</div>
@@ -102,7 +102,7 @@ const LeftSidebar = ({ toggleSidebar }) => {
 					</div>
 					<div className="flex flex-col">
 						<span className="text-[10px] font-black text-slate-500 uppercase tracking-widest leading-none">Powered By</span>
-						<span className="text-[12px] font-black text-white mt-1 tracking-tight">Virtual University</span>
+						<span className="text-[12px] font-black text-white mt-1 tracking-tight">Online University</span>
 					</div>
 				</div>
 				<p className="text-[9px] font-bold text-slate-600 uppercase tracking-widest text-center mt-4 opacity-50 italic">v2.0 Premium Experience</p>

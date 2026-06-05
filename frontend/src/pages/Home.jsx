@@ -47,7 +47,7 @@ const Home = () => {
 	return (
 		<div className='flex-1 mt-14 md:mt-18 bg-[#F2F3F8] h-auto py-8 px-3 md:px-7'>
 			<div className='flex items-center justify-center md:justify-start'>
-				<span className='text-2xl'>My Courses&nbsp;</span> (&nbsp;<p className='text-blue-800 text-lg'>Spring 2025</p> &nbsp;)
+				<span className='text-2xl'>My Courses&nbsp;</span> (&nbsp;<p className='text-blue-800 text-lg'>Spring 2026</p> &nbsp;)
 			</div>
 
 			<div className='grid grid-cols-1 md:grid-cols-2 gap-8 mt-6 md:mt-10'>

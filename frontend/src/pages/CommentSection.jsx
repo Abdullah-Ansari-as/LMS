@@ -31,7 +31,7 @@ const CommentSection = ({ isOpen, comments, setComments, selectLecture }) => {
         // const data = await getAllComments();
         // setComments(data);
         const data = await getCommentsByLecture(selectLecture);
-        console.log("datadatadatadata: ", data);
+        // console.log("datadatadatadata: ", data);
         setComments([...data]);
       } catch (error) {
         console.log(error.message);

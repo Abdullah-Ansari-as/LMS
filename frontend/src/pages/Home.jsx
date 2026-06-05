@@ -72,7 +72,7 @@ const Home = () => {
 
 								<div onClick={() => navigate(`/course/${data._id}/viewcourse`)} className='flex cursor-pointer'>
 									<div className='p-6 mr-3'>
-										<img className='h-[124px] w-26 rounded-lg border p-1 border-gray-400' src={data.instructor.profilePicture} alt="" />
+										<img className='h-[124px] object-cover w-26 rounded-lg border p-1 border-gray-400' src={data.instructor.profilePicture} alt="" />
 									</div>
 									<div className='flex py-7 flex-col gap-1'>
 										<span className='text-sm font-semibold text-black'>{data.instructor.name}</span>

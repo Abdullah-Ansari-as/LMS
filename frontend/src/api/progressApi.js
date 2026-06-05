@@ -14,11 +14,16 @@ export const getProgress = async (course) => {
 	}
 }
 
-export const markLectureComplete = async (courseId, lectureId) => {
+export const markLectureComplete = async (
+	courseId,
+	lectureId,
+	watchedSeconds,
+	videoDuration,
+) => {
 	try {
 		const res = await axios.post(
 			`${import.meta.env.VITE_BACKEND_URL}/api/progress/lecture/${courseId}/${lectureId}`,
-			{},
+			{ watchedSeconds, videoDuration },
 			{
 				headers: {
 					Authorization: `Bearer ${localStorage.getItem("token")}`

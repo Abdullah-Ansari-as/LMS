@@ -5,12 +5,56 @@ import { TbClockQuestion } from "react-icons/tb";
 import { FaArrowsRotate } from "react-icons/fa6";
 import { GrAnnounce } from "react-icons/gr";
 import { Link, useNavigate } from 'react-router-dom';
-import { useEffect } from 'react';
-import { getAllCourses } from '../api/courseApi';
+import { useEffect, useMemo } from 'react';
+import { getAllCourses, fetchSubmittedAssignments, fetchSubmittedQuizes } from '../api/courseApi';
 import { setCourses } from '../redux/slices/courseSlice';
 import { useDispatch, useSelector } from 'react-redux';
 import { useState } from "react";
 import { Loader2 } from "lucide-react";
+
+const getPendingAssignmentCount = (course, submittedAssignments) => {
+	const totalAssignments = course.assignments?.length || 0;
+	if (totalAssignments === 0) return 0;
+
+	const courseAssignmentIds = new Set(
+		course.assignments.map((assignmentId) => String(assignmentId)),
+	);
+
+	const submittedIds = new Set(
+		submittedAssignments
+			.filter(
+				(submission) =>
+					submission.course === course.courseName &&
+					submission.submit !== false &&
+					courseAssignmentIds.has(String(submission.assignmentId)),
+			)
+			.map((submission) => String(submission.assignmentId)),
+	);
+
+	return totalAssignments - submittedIds.size;
+};
+
+const getPendingQuizCount = (course, submittedQuizzes) => {
+	const totalQuizzes = course.quizzes?.length || 0;
+	if (totalQuizzes === 0) return 0;
+
+	const courseQuizIds = new Set(
+		course.quizzes.map((quizId) => String(quizId)),
+	);
+
+	const submittedIds = new Set(
+		submittedQuizzes
+			.filter(
+				(submission) =>
+					submission.course === course.courseName &&
+					submission.submit !== false &&
+					courseQuizIds.has(String(submission.quizId)),
+			)
+			.map((submission) => String(submission.quizId)),
+	);
+
+	return totalQuizzes - submittedIds.size;
+};
 
 const Home = () => {
 
@@ -18,25 +62,81 @@ const Home = () => {
 	const dispatch = useDispatch();
 
 	const [loading, setLoading] = useState(false);
+	const [submittedAssignments, setSubmittedAssignments] = useState([]);
+	const [submittedQuizzes, setSubmittedQuizzes] = useState([]);
 
 	const courseData = useSelector((store) => store.course.courses);
+	const submittedAssignmentsFromStore = useSelector(
+		(store) => store.course.submittedAssignments,
+	);
+	const submittedQuizzesFromStore = useSelector(
+		(store) => store.course.submittedQuizes,
+	);
+
+	const allSubmittedAssignments = useMemo(() => {
+		const combined = [
+			...submittedAssignments,
+			...(submittedAssignmentsFromStore || []),
+		];
+		const seen = new Set();
+
+		return combined.filter((submission) => {
+			const key = `${submission.course}-${submission.assignmentId}`;
+			if (seen.has(key)) return false;
+			seen.add(key);
+			return true;
+		});
+	}, [submittedAssignments, submittedAssignmentsFromStore]);
+
+	const allSubmittedQuizzes = useMemo(() => {
+		const combined = [
+			...submittedQuizzes,
+			...(submittedQuizzesFromStore || []),
+		];
+		const seen = new Set();
+
+		return combined.filter((submission) => {
+			const key = `${submission.course}-${submission.quizId}`;
+			if (seen.has(key)) return false;
+			seen.add(key);
+			return true;
+		});
+	}, [submittedQuizzes, submittedQuizzesFromStore]);
 
 	useEffect(() => {
-		try {
-			const fetchCourses = async () => {
-				setLoading(true)
-				const data = await getAllCourses();
-				if (data.success) {
-					dispatch(setCourses(data.allCourses));
-					setLoading(false)
+		const fetchData = async () => {
+			try {
+				setLoading(true);
+				const [coursesResult, submittedAssignmentsResult, submittedQuizzesResult] =
+					await Promise.all([
+						getAllCourses(),
+						fetchSubmittedAssignments(),
+						fetchSubmittedQuizes(),
+					]);
+
+				if (coursesResult.success) {
+					dispatch(setCourses(coursesResult.allCourses));
 				}
+
+				if (submittedAssignmentsResult.success) {
+					setSubmittedAssignments(
+						submittedAssignmentsResult.submittedAssignments || [],
+					);
+				}
+
+				if (submittedQuizzesResult.success) {
+					setSubmittedQuizzes(submittedQuizzesResult.submittedQuizes || []);
+				}
+			} catch (error) {
+				setLoading(false);
+				console.error(error);
+			} finally {
+				setLoading(false);
 			}
-			fetchCourses();
-		} catch (error) {
-			setLoading(false);
-			console.error(error);
-		}
-	}, []);
+		};
+
+		fetchData();
+	}, [dispatch]);
 
 	if(loading) {
 		return <div className="flex-1 flex items-center justify-center bg-[#F2F3F8] h-full py-8 px-7">
@@ -53,6 +153,15 @@ const Home = () => {
 			<div className='grid grid-cols-1 md:grid-cols-2 gap-8 mt-6 md:mt-10'>
 				{
 					courseData && courseData.map((data) => {
+						const pendingAssignments = getPendingAssignmentCount(
+							data,
+							allSubmittedAssignments,
+						);
+						const pendingQuizzes = getPendingQuizCount(
+							data,
+							allSubmittedQuizzes,
+						);
+
 						return (
 							<div key={data._id} className='h-86 bg-white shadow-gray-500 shadow-[5px_5px_16px_-1px_rgba(0,0,0,0.2)]'>
 
@@ -88,7 +197,14 @@ const Home = () => {
 									<div className='flex flex-col items-center justify-center relative'>
 										<Link to={`/course/${data._id}/assignment`} className='relative'>
 											<BiBookReader className='w-9 h-9 hover:text-gray-400 duration-400 transition-transform hover:scale-120 cursor-pointer' />
-											{data.assignments.length > 0 && <span className='absolute -top-1 -right-3 w-4 h-4 bg-red-500 rounded-full text-white text-[10px] flex items-center justify-center'>{data.assignments.length}</span>}
+											{pendingAssignments > 0 && (
+												<span
+													className='absolute -top-1 -right-3 w-4 h-4 bg-red-500 rounded-full text-white text-[10px] flex items-center justify-center'
+													title={`${pendingAssignments} assignment${pendingAssignments > 1 ? "s" : ""} pending`}
+												>
+													{pendingAssignments}
+												</span>
+											)}
 										</Link>
 										<p className='text-[11px] text-black mt-1'>Assignments</p>
 									</div>
@@ -101,7 +217,14 @@ const Home = () => {
 									<div className='flex flex-col items-center justify-center relative'>
 										<Link to={`/course/${data._id}/quiz`} className="relative">
 											<TbClockQuestion className='w-9 h-9 hover:text-gray-400 duration-400 transition-transform hover:scale-120 cursor-pointer' />
-											{data.quizzes.length > 0 && <span className='absolute -top-1 -right-3 w-4 h-4 bg-red-500 rounded-full text-white text-[10px] flex items-center justify-center'>{data.quizzes.length}</span>}
+											{pendingQuizzes > 0 && (
+												<span
+													className='absolute -top-1 -right-3 w-4 h-4 bg-red-500 rounded-full text-white text-[10px] flex items-center justify-center'
+													title={`${pendingQuizzes} quiz${pendingQuizzes > 1 ? "zes" : ""} pending`}
+												>
+													{pendingQuizzes}
+												</span>
+											)}
 										</Link>
 										<p className='text-[11px] text-black mt-1'>Quiz</p>
 									</div>

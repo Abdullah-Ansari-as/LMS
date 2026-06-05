@@ -50,9 +50,13 @@ const ProgressController = async (req, res) => {
 
 	// Lecture completion logic
 	const totalLectures = targetCourse?.lectures?.length || 0;
-	const completedLectures = student?.completedLectures?.filter((entry) =>
+	const courseCompletedLectures = student?.completedLectures?.filter((entry) =>
 		entry.courseId?.toString() === targetCourse?._id?.toString(),
-	).length || 0;
+	) || [];
+	const completedLectures = courseCompletedLectures.length;
+	const completedLectureIds = courseCompletedLectures.map((entry) =>
+		entry.lectureId?.toString(),
+	);
 
 	const progress = {
 		quizzes: quizzesWithSubmitStatus || [],
@@ -60,6 +64,7 @@ const ProgressController = async (req, res) => {
 		lectureProgress: {
 			totalLectures,
 			completedLectures,
+			completedLectureIds,
 			completionRate: totalLectures ? Math.round((completedLectures / totalLectures) * 100) : 0,
 		},
 	};
@@ -72,6 +77,23 @@ const ProgressController = async (req, res) => {
 
 const markLectureComplete = async (req, res) => {
 	const { courseId, lectureId } = req.params;
+	const { watchedSeconds, videoDuration } = req.body;
+
+	if (!videoDuration || videoDuration <= 0) {
+		return res.status(400).json({
+			success: false,
+			message: "Invalid video duration",
+		});
+	}
+
+	const requiredWatchTime = videoDuration * 0.5;
+	if (!watchedSeconds || watchedSeconds < requiredWatchTime) {
+		return res.status(400).json({
+			success: false,
+			message: "Insufficient watch time. At least 50% of the lecture must be watched.",
+		});
+	}
+
 	const student = await User.findById(req.user._id);
 	if (!student) {
 		return res.status(404).json({ success: false, message: "Student not found" });

@@ -30,31 +30,51 @@ const Login = () => {
 
 	const handleChange = (e) => {
 		const { name, value } = e.target;
-		setInput({ ...input, [name]: value })
-	}
+		setInput({ ...input, [name]: value });
+		if (errors[name]) {
+			setErrors((prev) => ({ ...prev, [name]: "" }));
+		}
+	};
+
+	const normalizeFieldErrors = (fieldErrors) =>
+		Object.fromEntries(
+			Object.entries(fieldErrors).map(([key, value]) => [
+				key,
+				Array.isArray(value) ? value[0] : value,
+			]),
+		);
 
 	const handleSubmit = async (e) => {
 		e.preventDefault();
 
 		const result = userLoginSchema.safeParse(input);
 		if (!result.success) {
-			const fieldErrors = result.error.formErrors.fieldErrors;
-			setErrors(fieldErrors)
-		} else {
-			try {
-				const result = await login(input);
-				if (result.success) {
-					toast.success(result.message);
-					dispatch(setUser(result.user));
-					navigate("/");
-				}
-			} catch (error) {
-				console.log(error);
-				toast.error(error.response?.data?.message || "Something went wrong");
-			}
+			setErrors(normalizeFieldErrors(result.error.formErrors.fieldErrors));
+			return;
 		}
 
-	}
+		setErrors({});
+
+		try {
+			const loginResult = await login(input);
+			if (loginResult.success) {
+				toast.success(loginResult.message);
+				dispatch(setUser(loginResult.user));
+				navigate("/");
+			}
+		} catch (error) {
+			const message =
+				error.response?.data?.message || "Something went wrong. Please try again.";
+
+			if (message === "Please signup first!") {
+				setErrors({ email: "No account found with this email address." });
+			} else if (message === "Invalid credentials") {
+				setErrors({ password: "Incorrect password. Please try again." });
+			} else {
+				setErrors({ password: message });
+			}
+		}
+	};
 
 
 	return (
@@ -110,7 +130,11 @@ const Login = () => {
 								<input
 									type='email'
 									name='email'
-									className='w-full bg-slate-50 border border-slate-200 text-slate-900 rounded-xl py-3 pl-10 pr-4 outline-none focus:ring-2 focus:ring-indigo-500/20 focus:border-indigo-500 transition-all placeholder:text-slate-400 shadow-sm'
+									className={`w-full bg-slate-50 border text-slate-900 rounded-xl py-3 pl-10 pr-4 outline-none focus:ring-2 focus:ring-indigo-500/20 transition-all placeholder:text-slate-400 shadow-sm ${
+										errors.email
+											? "border-red-400 focus:border-red-500"
+											: "border-slate-200 focus:border-indigo-500"
+									}`}
 									placeholder='name@university.edu'
 									value={input.email}
 									onChange={handleChange}
@@ -142,7 +166,11 @@ const Login = () => {
 								<input
 									type={isEyeOff ? "text" : "password"}
 									name='password'
-									className='w-full bg-slate-50 border border-slate-200 text-slate-900 rounded-xl py-3 pl-10 pr-12 outline-none focus:ring-2 focus:ring-indigo-500/20 focus:border-indigo-500 transition-all placeholder:text-slate-400 shadow-sm'
+									className={`w-full bg-slate-50 border text-slate-900 rounded-xl py-3 pl-10 pr-12 outline-none focus:ring-2 focus:ring-indigo-500/20 transition-all placeholder:text-slate-400 shadow-sm ${
+										errors.password
+											? "border-red-400 focus:border-red-500"
+											: "border-slate-200 focus:border-indigo-500"
+									}`}
 									placeholder='••••••••'
 									value={input.password}
 									onChange={handleChange}

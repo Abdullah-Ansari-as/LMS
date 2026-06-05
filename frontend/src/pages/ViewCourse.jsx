@@ -11,8 +11,19 @@ import CommentSection from "./CommentSection";
 import { FaFileAlt } from "react-icons/fa";
 import { X } from "lucide-react";
 import { getAllCourses } from "../api/courseApi";
-import { markLectureComplete } from "../api/progressApi";
+import { getProgress, markLectureComplete } from "../api/progressApi";
 import { setCourses } from "../redux/slices/courseSlice";
+
+const WATCH_COMPLETION_THRESHOLD = 0.5;
+const PROGRESS_CHECK_INTERVAL_MS = 1000;
+const MAX_PLAYBACK_DELTA_SEC = 3;
+
+const formatWatchTime = (seconds) => {
+  if (!seconds || seconds < 0) return "0:00";
+  const mins = Math.floor(seconds / 60);
+  const secs = Math.floor(seconds % 60);
+  return `${mins}:${secs.toString().padStart(2, "0")}`;
+};
 
 const ViewCourse = () => {
   const params = useParams();
@@ -40,6 +51,7 @@ const ViewCourse = () => {
       setCompletedLectures(JSON.parse(saved));
     }
   }, []);
+
   const { user } = useSelector((store) => store.user);
 
   const [currentLecture, setCurrentLecture] = useState(null);
@@ -48,12 +60,40 @@ const ViewCourse = () => {
   const [selectLecture, setSelectLecture] = useState(null);
   const [selectedHandoutLecture, setSelectedHandoutLecture] = useState(null);
   const [handoutText, setHandoutText] = useState("");
+  const [watchProgress, setWatchProgress] = useState({ watched: 0, duration: 0 });
 
   const allCourses = useSelector((store) => store.course.courses);
   const course = allCourses?.find((c) => c._id === paramId);
   const LectureData = course?.lectures || [];
 
   const isOpen = useSelector((state) => state.ui.isLectureModalOpen);
+
+  useEffect(() => {
+    const loadServerCompletedLectures = async () => {
+      if (!course?.courseName) return;
+
+      try {
+        const res = await getProgress(course.courseName);
+        const completedIds =
+          res?.progress?.lectureProgress?.completedLectureIds || [];
+
+        if (!completedIds.length) return;
+
+        setCompletedLectures((prev) => {
+          const updated = { ...prev };
+          completedIds.forEach((id) => {
+            updated[id] = true;
+          });
+          localStorage.setItem("completedLectures", JSON.stringify(updated));
+          return updated;
+        });
+      } catch (error) {
+        console.error("Failed to load lecture completion status:", error);
+      }
+    };
+
+    loadServerCompletedLectures();
+  }, [course?.courseName]);
 
   const openModal = (lecture) => {
     // console.log("lecture: ", lecture)
@@ -65,13 +105,74 @@ const ViewCourse = () => {
   const playerInstanceRef = useRef(null);
   const progressIntervalRef = useRef(null);
   const progressCheckedRef = useRef(false);
+  const lastPlaybackTimeRef = useRef(null);
+  const watchedSecondsRef = useRef(0);
+  const videoDurationRef = useRef(0);
 
-  const markLectureCompletedOnServer = async () => {
+  const markLectureCompletedOnServer = async (watchedSeconds, videoDuration) => {
     if (!course?._id || !currentLecture?._id) return;
     try {
-      await markLectureComplete(course._id, currentLecture._id);
+      await markLectureComplete(
+        course._id,
+        currentLecture._id,
+        watchedSeconds,
+        videoDuration,
+      );
     } catch (error) {
       console.error("Failed to save lecture progress:", error);
+    }
+  };
+
+  const handleWatchProgress = (player) => {
+    const duration = videoDurationRef.current || player.getDuration();
+    if (!duration || duration <= 0) return;
+
+    videoDurationRef.current = duration;
+
+    const currentTime = player.getCurrentTime();
+    if (currentTime == null || Number.isNaN(currentTime)) return;
+
+    const lastTime = lastPlaybackTimeRef.current;
+    if (lastTime !== null) {
+      const delta = currentTime - lastTime;
+      if (delta > 0 && delta <= MAX_PLAYBACK_DELTA_SEC) {
+        watchedSecondsRef.current += delta;
+      }
+    }
+
+    lastPlaybackTimeRef.current = currentTime;
+
+    setWatchProgress({
+      watched: watchedSecondsRef.current,
+      duration,
+    });
+
+    const watchedRatio = watchedSecondsRef.current / duration;
+    if (
+      watchedRatio >= WATCH_COMPLETION_THRESHOLD &&
+      !progressCheckedRef.current
+    ) {
+      progressCheckedRef.current = true;
+      setCompletedLectures((prev) => {
+        const updatedLectures = {
+          ...prev,
+          [currentLecture._id]: true,
+        };
+
+        localStorage.setItem(
+          "completedLectures",
+          JSON.stringify(updatedLectures),
+        );
+
+        return updatedLectures;
+      });
+
+      markLectureCompletedOnServer(watchedSecondsRef.current, duration);
+      toast("🎉 50% watched! Lecture marked as completed.");
+      if (progressIntervalRef.current) {
+        clearInterval(progressIntervalRef.current);
+        progressIntervalRef.current = null;
+      }
     }
   };
 
@@ -110,7 +211,11 @@ const ViewCourse = () => {
     if (!isOpen || !currentLecture?.lectureUrl) return;
 
     let mounted = true;
-    progressCheckedRef.current = false;
+    progressCheckedRef.current = !!completedLectures[currentLecture._id];
+    lastPlaybackTimeRef.current = null;
+    watchedSecondsRef.current = 0;
+    videoDurationRef.current = 0;
+    setWatchProgress({ watched: 0, duration: 0 });
 
     const videoId = extractVideoID(currentLecture.lectureUrl);
     if (!videoId) {
@@ -149,43 +254,19 @@ const ViewCourse = () => {
               const duration = player.getDuration();
               if (!duration || duration <= 0) return;
 
+              videoDurationRef.current = duration;
+
               if (progressIntervalRef.current) {
                 clearInterval(progressIntervalRef.current);
               }
 
               progressIntervalRef.current = setInterval(() => {
                 try {
-                  const currentTime = player.getCurrentTime();
-                  if (!currentTime || !duration) return;
-                  const ratio = currentTime / duration;
-
-                  if (ratio >= 0.75 && !progressCheckedRef.current) {
-                    progressCheckedRef.current = true;
-                    setCompletedLectures((prev) => {
-                      const updatedLectures = {
-                        ...prev,
-                        [currentLecture._id]: true,
-                      };
-
-                      localStorage.setItem(
-                        "completedLectures",
-                        JSON.stringify(updatedLectures),
-                      );
-
-                      return updatedLectures;
-                    });
-
-                    markLectureCompletedOnServer();
-                    toast("🎉 75% watched! Marked as done.");
-                    if (progressIntervalRef.current) {
-                      clearInterval(progressIntervalRef.current);
-                      progressIntervalRef.current = null;
-                    }
-                  }
+                  handleWatchProgress(player);
                 } catch (e) {
                   // ignore transient errors
                 }
-              }, 1000);
+              }, PROGRESS_CHECK_INTERVAL_MS);
             }
 
             if (
@@ -220,6 +301,10 @@ const ViewCourse = () => {
         playerInstanceRef.current = null;
       }
       progressCheckedRef.current = false;
+      lastPlaybackTimeRef.current = null;
+      watchedSecondsRef.current = 0;
+      videoDurationRef.current = 0;
+      setWatchProgress({ watched: 0, duration: 0 });
     };
   }, [currentLecture, isOpen]);
 
@@ -240,6 +325,10 @@ const ViewCourse = () => {
         progressIntervalRef.current = null;
       }
       progressCheckedRef.current = false;
+      lastPlaybackTimeRef.current = null;
+      watchedSecondsRef.current = 0;
+      videoDurationRef.current = 0;
+      setWatchProgress({ watched: 0, duration: 0 });
     }
   }, [isOpen]);
 
@@ -348,6 +437,69 @@ const ViewCourse = () => {
       setHandoutText("");
     }
   }, [selectedHandoutLecture]);
+
+  const renderWatchProgress = (variant = "overlay") => {
+    if (!currentLecture) return null;
+
+    const isCompleted = completedLectures[currentLecture._id];
+    const { watched, duration } = watchProgress;
+    const requiredWatch = duration * WATCH_COMPLETION_THRESHOLD;
+    const progressPercent = isCompleted
+      ? 100
+      : requiredWatch > 0
+        ? Math.min(100, Math.round((watched / requiredWatch) * 100))
+        : 0;
+
+    const isStrip = variant === "strip";
+
+    return (
+      <div
+        className={
+          isStrip
+            ? "border-b border-slate-200 bg-slate-900 px-2.5 py-2 sm:px-4 sm:py-2.5"
+            : "absolute top-0 left-0 right-0 z-10 bg-black/80 px-4 py-2.5"
+        }
+      >
+        <div
+          className={`flex text-white ${
+            isStrip
+              ? "flex-col gap-1.5 min-[360px]:flex-row min-[360px]:items-center min-[360px]:justify-between min-[360px]:gap-2"
+              : "items-center justify-between gap-3 text-sm"
+          }`}
+        >
+          <span className={`font-medium ${isStrip ? "text-[11px] sm:text-xs" : "text-sm"}`}>
+            Watch Progress
+          </span>
+          <div className={`flex items-center gap-2 tabular-nums ${isStrip ? "text-[11px] sm:text-xs" : "text-sm"}`}>
+            <span className="font-mono">
+              {formatWatchTime(watched)}
+              {duration > 0 && <> / {formatWatchTime(requiredWatch)}</>}
+            </span>
+            <span
+              className={`font-semibold ${
+                isCompleted ? "text-green-400" : "text-blue-300"
+              }`}
+            >
+              {progressPercent}%
+            </span>
+          </div>
+        </div>
+        <div className={`rounded-full bg-white/20 overflow-hidden ${isStrip ? "mt-1.5 h-1" : "mt-1.5 h-1.5"}`}>
+          <div
+            className={`h-full transition-all duration-300 ${
+              isCompleted ? "bg-green-500" : "bg-blue-500"
+            }`}
+            style={{ width: `${progressPercent}%` }}
+          />
+        </div>
+        {!isCompleted && duration > 0 && !isStrip && (
+          <p className="mt-1 text-xs text-white/70 hidden sm:block">
+            Watch at least 50% to mark this lecture as completed
+          </p>
+        )}
+      </div>
+    );
+  };
 
   return (
     <div className="min-h-screen bg-[#F2F3F8] py-8 px-2 md:px-8 mt-18">
@@ -509,138 +661,139 @@ const ViewCourse = () => {
       </div>
 
       {isOpen && currentLecture && (
-        <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/80 backdrop-blur-sm overflow-y-auto py-4">
-          <div className="relative mx-2 sm:mx-4 md:mx-6 my-4 md:my-8 w-full max-w-7xl">
-            {/* Close Button */}
-            <button
-              onClick={() => dispatch(closeLectureModal())}
-              className="absolute -top-2 -right-2 sm:top-2 sm:right-2 z-50 rounded-full p-2 sm:p-3 bg-gray-800/90 hover:bg-black text-white transition-colors shadow-lg"
-              aria-label="Close modal"
-            >
-              <svg
-                className="h-4 w-4 sm:h-5 sm:w-5"
-                fill="none"
-                stroke="currentColor"
-                viewBox="0 0 24 24"
+        <div className="fixed inset-0 z-50 overflow-y-auto bg-black/80 backdrop-blur-sm">
+          <div className="flex min-h-full items-start justify-center p-1.5 sm:p-4 lg:items-center lg:p-6">
+            <div className="relative my-2 w-full max-w-7xl sm:my-4 lg:my-8">
+              {/* Close Button */}
+              <button
+                onClick={() => dispatch(closeLectureModal())}
+                className="absolute right-1.5 top-1.5 z-50 rounded-full bg-gray-800/90 p-2 text-white shadow-lg transition-colors hover:bg-black sm:right-2 sm:top-2 sm:p-2.5"
+                aria-label="Close modal"
               >
-                <path
-                  strokeLinecap="round"
-                  strokeLinejoin="round"
-                  strokeWidth={2}
-                  d="M6 18L18 6M6 6l12 12"
-                />
-              </svg>
-            </button>
-
-            <div className="rounded-xl bg-white shadow-2xl overflow-hidden flex flex-col lg:flex-row h-[95vh] sm:h-[90vh] md:h-[85vh]">
-              {/* Left Side - Video Section */}
-              <div className="flex-1 flex flex-col min-w-0 lg:w-[65%] xl:w-[70%]">
-                {/* Header */}
-                <div className="border-b px-4 py-3 sm:px-6 sm:py-4">
-                  <h2 className="text-lg sm:text-xl font-bold text-gray-800 line-clamp-1">
-                    {currentLecture.lectureTitle || "Lecture Video"}
-                  </h2>
-                  <p className="text-xs sm:text-sm text-gray-500 mt-1">
-                    {course?.courseName} •{" "}
-                    {currentLecture.duration || "Duration not specified"}
-                  </p>
-                </div>
-
-                {/* Video Player - Maintains aspect ratio on all screens */}
-                <div className="relative flex-1 bg-black min-h-[250px] sm:min-h-[300px] md:min-h-[350px]">
-                  <div
-                    ref={playerContainerRef}
-                    className="absolute inset-0 w-full h-full"
+                <svg
+                  className="h-4 w-4 sm:h-5 sm:w-5"
+                  fill="none"
+                  stroke="currentColor"
+                  viewBox="0 0 24 24"
+                >
+                  <path
+                    strokeLinecap="round"
+                    strokeLinejoin="round"
+                    strokeWidth={2}
+                    d="M6 18L18 6M6 6l12 12"
                   />
+                </svg>
+              </button>
+
+              <div className="flex max-h-none flex-col overflow-hidden rounded-xl bg-white shadow-2xl lg:max-h-[85vh] lg:h-[85vh] lg:flex-row">
+                {/* Video Section */}
+                <div className="flex w-full shrink-0 flex-col min-w-0 lg:min-h-0 lg:flex-1 lg:w-[65%] xl:w-[70%]">
+                  {/* Header */}
+                  <div className="border-b px-3 py-2.5 pr-12 sm:px-5 sm:py-3 sm:pr-14 lg:px-6 lg:py-4">
+                    <h2 className="text-base font-bold text-gray-800 line-clamp-2 sm:text-lg lg:text-xl">
+                      {currentLecture.lectureTitle || "Lecture Video"}
+                    </h2>
+                    <p className="mt-0.5 text-[11px] text-gray-500 line-clamp-1 sm:text-xs lg:text-sm">
+                      {course?.courseName} •{" "}
+                      {currentLecture.duration || "Duration not specified"}
+                    </p>
+                  </div>
+
+                  {/* Watch progress strip on mobile — keeps video fully visible */}
+                  <div className="lg:hidden">{renderWatchProgress("strip")}</div>
+
+                  {/* Video Player */}
+                  <div className="relative aspect-video w-full shrink-0 bg-black lg:aspect-auto lg:min-h-[280px] lg:flex-1">
+                    <div className="hidden lg:block">{renderWatchProgress("overlay")}</div>
+                    <div
+                      ref={playerContainerRef}
+                      className="absolute inset-0 h-full w-full"
+                    />
+                  </div>
+
+                  {/* Lecture Info below Video */}
+                  <div className="shrink-0 border-t p-2.5 sm:p-4 md:p-6">
+                    <div className="flex flex-col gap-2.5 sm:flex-row sm:items-center sm:justify-between sm:gap-3">
+                      <div className="flex min-w-0 items-center gap-2.5 sm:gap-3">
+                        <img
+                          src={course?.instructor?.profilePicture}
+                          alt={course?.instructor?.name}
+                          className="h-8 w-8 shrink-0 rounded-full border border-gray-300 object-cover sm:h-9 sm:w-9 md:h-10 md:w-10"
+                        />
+                        <div className="min-w-0">
+                          <p className="truncate text-sm font-semibold text-gray-900 sm:text-base">
+                            {course?.instructor?.name}
+                          </p>
+                          <p className="truncate text-[11px] text-gray-500 sm:text-xs">
+                            Instructor • {course?.instructor?.university}
+                          </p>
+                        </div>
+                      </div>
+                      <div className="shrink-0 self-start sm:self-auto">
+                        <div
+                          className={`whitespace-nowrap rounded-full px-2.5 py-1 text-[11px] font-medium sm:px-3 sm:text-sm ${
+                            completedLectures[currentLecture._id]
+                              ? "bg-green-100 text-green-800"
+                              : "bg-blue-100 text-blue-800"
+                          }`}
+                        >
+                          {completedLectures[currentLecture._id]
+                            ? "✓ Completed"
+                            : "In Progress"}
+                        </div>
+                      </div>
+                    </div>
+
+                    {currentLecture.description && (
+                      <div className="mt-2.5 rounded-lg bg-gray-50 p-2.5 sm:mt-3 sm:p-4">
+                        <h3 className="mb-1.5 text-sm font-medium text-gray-900 sm:mb-2 sm:text-base">
+                          Description
+                        </h3>
+                        <p className="line-clamp-3 cursor-pointer text-xs text-gray-700 transition-all hover:line-clamp-none sm:text-sm">
+                          {currentLecture.description}
+                        </p>
+                      </div>
+                    )}
+                  </div>
                 </div>
 
-                {/* Lecture Info below Video */}
-                <div className="border-t p-3 sm:p-4 md:p-6">
-                  <div className="flex flex-col xs:flex-row xs:items-center justify-between gap-3">
-                    <div className="flex items-center space-x-3">
-                      <img
-                        src={course?.instructor?.profilePicture}
-                        alt={course?.instructor?.name}
-                        className="h-8 w-8 sm:h-9 sm:w-9 md:h-10 md:w-10 rounded-full border border-gray-300 object-cover flex-shrink-0"
-                      />
+                {/* Comments Section */}
+                <div className="flex min-h-[280px] w-full flex-col border-t border-gray-200 sm:min-h-[320px] sm:h-[45dvh] lg:min-h-0 lg:h-auto lg:min-h-0 lg:flex-1 lg:border-t-0 lg:border-l lg:w-[35%] xl:w-[30%]">
+                  {/* Comments Header */}
+                  <div className="flex shrink-0 items-center justify-between gap-2 border-b px-3 py-2.5 sm:px-5 sm:py-3 lg:px-6 lg:py-4">
+                    <div className="hidden min-w-0 items-center gap-2.5 sm:flex sm:gap-3">
+                      <div className="relative shrink-0">
+                        <img
+                          src={user.profilePicture}
+                          alt="Your profile"
+                          className="size-9 rounded-full border-2 border-white object-cover shadow-sm sm:size-10 lg:size-12"
+                        />
+                        <div className="absolute bottom-0 right-0 h-2 w-2 rounded-full border-2 border-white sm:h-2.5 sm:w-2.5" />
+                      </div>
                       <div className="min-w-0">
-                        <p className="font-semibold text-gray-900 text-sm sm:text-base truncate">
-                          {course?.instructor?.name}
+                        <p className="truncate text-sm font-semibold text-gray-900">
+                          {user?.name}
                         </p>
-                        <p className="text-xs text-gray-500 truncate">
-                          Instructor • {course?.instructor?.university}
+                        <p className="truncate text-xs text-gray-500">
+                          @{user?.name?.toLowerCase()}
                         </p>
                       </div>
                     </div>
-                    <div className="flex-shrink-0">
-                      <div
-                        className={`px-3 py-1 rounded-full text-xs sm:text-sm font-medium whitespace-nowrap ${
-                          completedLectures[currentLecture._id]
-                            ? "bg-green-100 text-green-800"
-                            : "bg-blue-100 text-blue-800"
-                        }`}
-                      >
-                        {completedLectures[currentLecture._id]
-                          ? "✓ Completed"
-                          : "In Progress"}
-                      </div>
-                    </div>
+                    <h3 className="text-sm font-bold text-gray-800 sm:text-base lg:text-lg">
+                      {comments?.length || 0}
+                      <span className="px-1.5 sm:px-2">Comments</span>
+                    </h3>
                   </div>
 
-                  {currentLecture.description && (
-                    <div className="bg-gray-50 rounded-lg p-3 sm:p-4 mt-3">
-                      <h3 className="font-medium text-gray-900 text-sm sm:text-base mb-2">
-                        Description
-                      </h3>
-                      <p className="text-gray-700 text-xs sm:text-sm line-clamp-3 hover:line-clamp-none transition-all cursor-pointer">
-                        {currentLecture.description}
-                      </p>
-                    </div>
-                  )}
-                </div>
-              </div>
-
-              {/* Right Side - Comments Section */}
-              <div className="flex-1 flex flex-col min-w-0 border-t lg:border-t-0 lg:border-l border-gray-200 lg:w-[35%] xl:w-[30%]">
-                {/* Comments Header */}
-                <div className="border-b px-4 py-3 flex gap-10 sm:px-6 sm:py-4 ">
-                  <div className="hidden sm:flex items-center space-x-3">
-                    <div className="relative">
-                      <img
-                        src={user.profilePicture}
-                        alt="Your profile"
-                        className="size-10 sm:h-12 sm:w-12 rounded-full border-2 border-white shadow-sm object-cover"
-                      />
-                      <div className="absolute bottom-0 right-0 h-2 w-2 sm:h-3 sm:w-3  rounded-full border-2 border-white" />
-                    </div>
-                    <div className="min-w-0">
-                      <p className="text-xl sm:text-sm font-semibold  text-gray-900 truncate">
-                        {user?.name}
-                      </p>
-                      <p className="text-xs text-gray-500 truncate">
-                        @{user?.name?.toLowerCase()}
-                      </p>
-                    </div>
+                  {/* Comments Component */}
+                  <div className="flex min-h-0 flex-1 flex-col overflow-hidden">
+                    <CommentSection
+                      isOpen={isOpen}
+                      comments={comments}
+                      setComments={setComments}
+                      selectLecture={selectLecture}
+                    />
                   </div>
-                  <div className="flex items-center justify-between">
-                    <div>
-                      <h3 className="text-base sm:text-lg font-bold text-gray-800">
-                        {comments?.length || 0}
-
-                        <span className="text-base px-2">Comments</span>
-                      </h3>
-                    </div>
-                  </div>
-                </div>
-
-                {/* Comments Component */}
-                <div className="flex-1 overflow-y-auto">
-                  <CommentSection
-                    isOpen={isOpen}
-                    comments={comments}
-                    setComments={setComments}
-                    selectLecture={selectLecture}
-                  />
                 </div>
               </div>
             </div>

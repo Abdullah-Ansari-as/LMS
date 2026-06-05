@@ -49,10 +49,10 @@ const CommentItem = memo(
 
 
     return (
-      <div className={`${isReply ? "ml-8 mt-3" : ""}`}>
+      <div className={`${isReply ? "ml-3 mt-2 sm:ml-8 sm:mt-3" : ""}`}>
         {/* Comment Card */}
         <div
-          className={`${isReply ? "bg-gray-50" : "bg-white"} rounded-lg p-4 border border-gray-200`}
+          className={`${isReply ? "bg-gray-50" : "bg-white"} rounded-lg border border-gray-200 p-2.5 sm:p-4`}
         >
           <div className="flex items-start space-x-3">
             {/* ... rest of your CommentItem JSX remains exactly the same ... */}

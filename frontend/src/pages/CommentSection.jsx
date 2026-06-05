@@ -151,30 +151,29 @@ const CommentSection = ({ isOpen, comments, setComments, selectLecture }) => {
   };
 
   return (
-    <div className="flex flex-col h-full bg-gray-50" dir="ltr">
-      <div className="top-0 z-10 bg-white border-b border-gray-200">
-        <div className="sm:hidden flex items-center space-x-3 py-2">
-          <div className="relative">
+    <div className="flex h-full min-h-0 flex-col bg-gray-50" dir="ltr">
+      <div className="shrink-0 bg-white border-b border-gray-200 px-2.5 py-2 sm:px-3 sm:py-2">
+        <div className="flex items-center gap-2.5 sm:hidden">
+          <div className="relative shrink-0">
             <img
               src={user.profilePicture}
               alt="Your profile"
-              className="h-8 w-8 rounded-full border-2 border-white shadow-sm object-cover"
+              className="h-8 w-8 rounded-full border-2 border-white object-cover shadow-sm"
             />
-            <div className="absolute bottom-0 right-0 h-2 w-2 bg-green-500 rounded-full border-2 border-white" />
+            <div className="absolute bottom-0 right-0 h-2 w-2 rounded-full border-2 border-white bg-green-500" />
           </div>
-          <div className="flex-1 min-w-0">
-            <p className="text-sm font-semibold text-gray-900 truncate">
+          <div className="min-w-0 flex-1">
+            <p className="truncate text-sm font-semibold text-gray-900">
               {user?.name}
             </p>
-            <p className="text-xs text-gray-500 truncate">
+            <p className="truncate text-xs text-gray-500">
               @{user?.name?.toLowerCase()}
             </p>
           </div>
         </div>
 
-        {/* Reply Status Indicator - Responsive */}
         {replyingTo && (
-          <div className="flex items-center justify-between mt-2 sm:mt-0 bg-blue-50 px-3 py-2 rounded-lg">
+          <div className="mt-2 flex items-center justify-between rounded-lg bg-blue-50 px-2.5 py-1.5 sm:mt-0 sm:px-3 sm:py-2">
             <div className="flex items-center space-x-2">
               <svg
                 className="w-3 h-3 sm:w-4 sm:h-4"
@@ -201,8 +200,8 @@ const CommentSection = ({ isOpen, comments, setComments, selectLecture }) => {
         )}
       </div>
 
-      <div ref={commentRef} className="flex-1 overflow-y-auto">
-        <div className="p-3 sm:p-4 space-y-3 sm:space-y-4">
+      <div ref={commentRef} className="min-h-0 flex-1 overflow-y-auto overscroll-contain">
+        <div className="space-y-3 p-2.5 sm:space-y-4 sm:p-4">
           {comments?.length === 0 ? (
             <div className="text-center py-8 sm:py-12">
               <div className="text-4xl sm:text-5xl mb-3 sm:mb-4">💬</div>
@@ -239,14 +238,12 @@ const CommentSection = ({ isOpen, comments, setComments, selectLecture }) => {
         </div>
       </div>
 
-      {/* ... your existing bottom textarea JSX ... */}
-
-      <div className="sticky bottom-0 left-0 right-0 border-gray-200 bg-white pb-3 sm:p-3">
+      <div className="sticky bottom-0 shrink-0 border-t border-gray-200 bg-white p-2 sm:p-3">
         <div className="relative">
-          {replyingTo && window.innerWidth < 640 && (
-            <div className="mb-2 flex items-center text-xs text-blue-600 bg-blue-50 px-3 py-1 rounded-lg">
+          {replyingTo && (
+            <div className="mb-2 flex items-center rounded-lg bg-blue-50 px-2.5 py-1 text-xs text-blue-600 sm:hidden">
               <svg
-                className="w-3 h-3 mr-1"
+                className="mr-1 h-3 w-3 shrink-0"
                 fill="currentColor"
                 viewBox="0 0 20 20"
               >
@@ -256,18 +253,18 @@ const CommentSection = ({ isOpen, comments, setComments, selectLecture }) => {
                   clipRule="evenodd"
                 />
               </svg>
-              <span>Replying to comment</span>
+              <span className="truncate">Replying to comment</span>
               <button
                 onClick={() => setReplyingTo(null)}
-                className="ml-auto text-gray-500 hover:text-gray-700"
+                className="ml-auto shrink-0 pl-2 text-gray-500 hover:text-gray-700"
               >
                 ✕
               </button>
             </div>
           )}
 
-          <div className="flex flex-row xs:flex-row xs:items-end gap-2">
-            <div className="flex-1 relative" dir="ltr">
+          <div className="flex items-end gap-1.5 sm:gap-2">
+            <div className="relative min-w-0 flex-1" dir="ltr">
               <textarea
                 value={comment}
                 onChange={(e) => setComment(e.target.value)}
@@ -276,10 +273,8 @@ const CommentSection = ({ isOpen, comments, setComments, selectLecture }) => {
                     ? "Add to your reply..."
                     : "What are your thoughts?"
                 }
-                rows={
-                  window.innerWidth < 475 ? 2 : window.innerWidth < 768 ? 2 : 3
-                }
-                className="w-full resize-none rounded-lg sm:rounded-xl border border-gray-300 px-3 sm:px-4 h-fit shrink-0 pt-2 text-xs sm:text-sm focus:border-blue-500 focus:outline-none focus:ring-1 sm:focus:ring-2 focus:ring-blue-200"
+                rows={2}
+                className="h-fit min-h-[2.75rem] w-full shrink-0 resize-none rounded-lg border border-gray-300 px-2.5 py-2 text-xs focus:border-blue-500 focus:outline-none focus:ring-1 focus:ring-blue-200 sm:min-h-[3rem] sm:rounded-xl sm:px-4 sm:pt-2.5 sm:text-sm sm:focus:ring-2"
                 style={{
                   direction: "ltr",
                   textAlign: "left",
@@ -288,7 +283,6 @@ const CommentSection = ({ isOpen, comments, setComments, selectLecture }) => {
                 dir="ltr"
                 lang="en"
                 onFocus={(e) => {
-                  // Force LTR on focus
                   e.target.style.direction = "ltr";
                   e.target.style.textAlign = "left";
                 }}
@@ -300,23 +294,20 @@ const CommentSection = ({ isOpen, comments, setComments, selectLecture }) => {
                 }}
               />
             </div>
-            <div className="flex items-center justify-between xs:justify-end gap-2">
-              <button
-                onClick={handleSubmit}
-                disabled={loading || !comment.trim()}
-                className={`shrink-0 h-fit rounded-lg px-3 py-2 sm:px-5 sm:py-3 text-xs sm:text-sm font-medium text-white transition-colors focus:outline-none focus:ring-1 sm:focus:ring-2 focus:ring-blue-500 focus:ring-offset-1 sm:focus:ring-offset-2 ${
-                  loading || !comment.trim()
-                    ? "bg-blue-400 cursor-not-allowed"
-                    : "bg-blue-600 hover:bg-blue-700"
-                }`}
-              >
-                {loading ? "Posting..." : "Post"}
-              </button>
-            </div>
+            <button
+              onClick={handleSubmit}
+              disabled={loading || !comment.trim()}
+              className={`h-fit shrink-0 rounded-lg px-2.5 py-2 text-[11px] font-medium text-white transition-colors focus:outline-none focus:ring-1 focus:ring-blue-500 focus:ring-offset-1 sm:px-4 sm:py-2.5 sm:text-sm sm:focus:ring-2 sm:focus:ring-offset-2 ${
+                loading || !comment.trim()
+                  ? "cursor-not-allowed bg-blue-400"
+                  : "bg-blue-600 hover:bg-blue-700"
+              }`}
+            >
+              {loading ? "..." : "Post"}
+            </button>
           </div>
 
-          {/* Character Count - Desktop */}
-          <div className="hidden xs:flex justify-between items-center mt-2">
+          <div className="mt-1.5 hidden items-center justify-between sm:flex">
             <span className="text-xs text-gray-500">
               {replyingTo ? "Posting a reply" : "Posting a comment"}
             </span>

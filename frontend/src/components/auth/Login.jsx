@@ -98,7 +98,7 @@ const Login = () => {
 						className="mb-10 text-center md:text-left"
 					>
 						<img className='h-12 mb-6 mx-auto md:mx-0 object-contain drop-shadow-sm' src={LMSLOGO} alt="lms-logo" />
-						<h2 className="text-3xl font-bold text-slate-900 mb-2 tracking-tight">Student Login</h2>
+						<h2 className="text-3xl font-bold text-slate-900 mb-2 tracking-tight"> Login</h2>
 						<p className="text-slate-500 text-sm">Welcome back! Please enter your details.</p>
 					</motion.div>
 
@@ -210,9 +210,9 @@ const Login = () => {
 							className="bg-white/10 backdrop-blur-md p-8 rounded-2xl border border-white/20"
 						>
 							<h1 className="text-white text-4xl font-extrabold mb-8 tracking-tight drop-shadow-xl">
-								Learning <br />
-								<span className="text-indigo-300">Management</span> <br />
-								System
+								Online <br />
+								<span className="text-indigo-300">University</span> <br />
+								
 							</h1>
 							<div className="max-w-xs mx-auto">
 								<p className='text-white text-lg italic font-medium leading-relaxed mb-4 drop-shadow-lg'>
